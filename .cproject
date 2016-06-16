@@ -259,13 +259,13 @@
 	<storageModule moduleId="refreshScope" versionNumber="2">
 		<configuration configurationName="Debug_AMA"/>
 		<configuration configurationName="Debug_AMA_linux_gnueabi"/>
+		<configuration configurationName="PC_Debug">
+			<resource resourceType="PROJECT" workspacePath="/RpiProj"/>
+		</configuration>
 		<configuration configurationName="Debug">
 			<resource resourceType="PROJECT" workspacePath="/RpiProj"/>
 		</configuration>
 		<configuration configurationName="Release">
-			<resource resourceType="PROJECT" workspacePath="/RpiProj"/>
-		</configuration>
-		<configuration configurationName="PC_Debug">
 			<resource resourceType="PROJECT" workspacePath="/RpiProj"/>
 		</configuration>
 	</storageModule>
