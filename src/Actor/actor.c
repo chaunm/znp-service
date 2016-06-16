@@ -139,6 +139,7 @@ PACTOR ActorCreate(char* guid, char* psw)
 	if ((guid == NULL))
 		return NULL;
 	PACTOR pActor = (PACTOR)malloc(sizeof(ACTOR));
+	memset(pActor, 0, sizeof(ACTOR));
 	pActor->guid = StrDup(guid);
 	pActor->psw = StrDup(psw);
 	ActorConnect(pActor, pActor->guid, pActor->psw);
@@ -235,7 +236,6 @@ int ActorConnect(PACTOR pActor, char* guid, char* psw)
     printf("subscribe to topic %s\n", topicName);
     mosquitto_subscribe(client, &pActor->DeliveredToken, topicName, QOS);
     free(topicName);
-    // start loop (create new thread)
     return 0;
 }
 
