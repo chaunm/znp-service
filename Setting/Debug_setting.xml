@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cdtprojectproperties>
+<section name="org.eclipse.cdt.internal.ui.wizards.settingswizards.IncludePaths">
+<language name="C Source File">
+<includepath workspace_path="true">/RpiProj/src/DeviceManager</includepath>
+<includepath workspace_path="true">/RpiProj/src/log</includepath>
+<includepath workspace_path="true">/RpiProj/src/zcl</includepath>
+<includepath workspace_path="true">/RpiProj/src/ZNP</includepath>
+<includepath workspace_path="true">/RpiProj/src/Queue</includepath>
+<includepath workspace_path="true">/RpiProj/src/SerialCommunication</includepath>
+<includepath workspace_path="true">/RpiProj/src/universal</includepath>
+<includepath workspace_path="true">/RpiProj/src/Actor</includepath>
+<includepath workspace_path="true">/RpiProj/src/lib/jansson</includepath>
+<includepath workspace_path="true">/RpiProj/src/lib/uuid/include</includepath>
+
+</language>
+<language name="Object File">
+
+</language>
+<language name="Assembly Source File">
+
+</language>
+</section>
+<section name="org.eclipse.cdt.internal.ui.wizards.settingswizards.Macros">
+<language name="C Source File">
+<macro>
+<name>PI_RUNNING</name><value/>
+</macro>
+
+</language>
+<language name="Object File">
+
+</language>
+<language name="Assembly Source File">
+
+</language>
+</section>
+</cdtprojectproperties>

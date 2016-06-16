@@ -1,0 +1,36 @@
+/*
+ * zcl_ss_occupancy.h
+ *
+ *  Created on: Apr 6, 2016
+ *      Author: ChauNM
+ */
+
+#ifndef ZCL_SS_OCCUPANCY_H_
+#define ZCL_SS_OCCUPANCY_H_
+
+#define ZCL_SS_OCCUPANCY_ATTR_COUNT		8
+
+#define ZCL_SS_OCCUPANCY_STATE_ATTR		0x0000
+#define ZCL_SS_OCCUPANCY_SS_TYPE_ATTR	0x0001
+
+#define ZCL_SS_OCCUPANCY_PIR_UNACTIVE_DELAY_ATTR	0x0010
+#define ZCL_SS_OCCUPANCY_PIR_ACTIVE_DELAY_ATTR		0x0011
+#define ZCL_SS_OCCUPANCY_PIR_THRESHOLD_ATTR			0x0012
+
+#define ZCL_SS_OCCUPANCY_ULTRA_UNACTIVE_DELAY_ATTR	0x0020
+#define ZCL_SS_OCCUPANCY_ULTRA_ACTIVE_DELAY_ATTR	0x0021
+#define ZCL_SS_OCCUPANCY_ULTRA_THRESHOLD_ATTR		0x0022
+
+#pragma pack(1)
+typedef struct tagZCLSSOCCUPANCYATTR{
+	BYTE nState;
+	BYTE nSensorType;
+} ZCLSSOCCUPANCYATTR, *PZCLSSOCCUPANCYATTR;
+
+VOID ZclSsOccuAttrInit(PZCLSSOCCUPANCYATTR pData);
+BYTE ZclSsOccuGetAttr(WORD nNwkAddr, BYTE nEp);
+VOID ZclSsOccuUpdateReadAttr(WORD nNwkAddr, BYTE nEp, PBYTE pData, BYTE nLen);
+VOID ZclSsOccuParseWriteAttrRsp(WORD nNwkAddr, BYTE nEp, PBYTE pData, BYTE nLength);
+VOID ZclSsOccuParseAttrReport(WORD nNwkAddr, BYTE nEp, PBYTE pData, BYTE nLen);
+BYTE ZclSsOccuConfig(WORD nDstAddr, BYTE nEp);
+#endif /* ZCL_SS_OCCUPANCY_H_ */
