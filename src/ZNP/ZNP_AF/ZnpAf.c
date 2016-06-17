@@ -123,6 +123,8 @@ VOID AfProcessIncomingMsg(PZNPPACKAGE pZnpPackage, BYTE nLength)
 			pClusterAddr->nNwkAddr = pIncomingData->nSrcAddr;
 			pClusterAddr->nClusterID = pIncomingData->nClusterId;
 			pthread_create(&AddClusterThr, NULL, (PVOID)DeviceAddCluster, (PVOID)pClusterAddr);
+			// add pthread_detach to tell that resources of this thread should be freed after return
+			pthread_detach(AddClusterThr);
 		}
 		// print ZCL data for debugging
 		printf("ZCL Data:\n");

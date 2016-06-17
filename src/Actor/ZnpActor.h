@@ -40,7 +40,7 @@ typedef struct tagZNPACTORDATA {
 #define ZNP_DATA_TYPE_FLOAT		1
 #define ZNP_DATA_TYPE_STRING	2
 
-void ZnpActorCreate(PZNPACTOROPTION option);
+void ZnpActorStart(PZNPACTOROPTION option);
 void ZnpActorPublishEvent(char* event, void* eventParam);
 void ZnpActorPublishDeviceAddedEvent(IEEEADDRESS macId, BYTE endpoint, WORD deviceId, WORD deviceType);
 void ZnpActorPublishDeviceRemovedEvent(IEEEADDRESS macId);

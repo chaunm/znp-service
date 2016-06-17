@@ -96,7 +96,7 @@ int main(int argc, char* argv[])
 	/* Start Znp actor */
 	//SerialHandleThread = pthread_create(&ZnpActorThread, NULL, (void*)&ZnpActorProcess, (void*)&option);
 	printf("create znp actor\n");
-	ZnpActorCreate(&option);
+	ZnpActorStart(&option);
 	/* open serial port and init queue for serial communication */
 	char* PortName = malloc(strlen("/dev/") + strlen(SerialPort) + 1);
 	memset(PortName, 0, strlen("/dev/") + strlen(SerialPort) + 1);

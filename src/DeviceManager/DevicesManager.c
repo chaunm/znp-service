@@ -318,6 +318,7 @@ VOID DeviceAdd(PZDOANNCEINFO pDeviceInfo)
 		pFirstDevice = pNewDevice;
 		nDeviceCount++;
 		pthread_create(&NewDvConfigThr, NULL, (void*)&DeviceGetInfoAndConfig, (void*)(pNwkAddr));
+		pthread_detach(NewDvConfigThr);
 		sprintf(LogString, "Device online 0x%04X, IEEE Address: 0x%04X%04X%04X%04X",
 				pDeviceInfo->nNwkAddr, pIeee[3], pIeee[2], pIeee[1], pIeee[0]);
 		LogWrite(LogString);
@@ -335,6 +336,7 @@ VOID DeviceAdd(PZDOANNCEINFO pDeviceInfo)
 	// new device added to list, get info
 	nDeviceCount++;
 	pthread_create(&NewDvConfigThr, NULL, (void*)&DeviceGetInfoAndConfig, (void*)(pNwkAddr));
+	pthread_detach(NewDvConfigThr);
 	sprintf(LogString, "Device online 0x%04X, IEEE Address: 0x%04X%04X%04X%04X",
 			pDeviceInfo->nNwkAddr, pIeee[3], pIeee[2], pIeee[1], pIeee[0]);
 	LogWrite(LogString);

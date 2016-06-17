@@ -517,7 +517,8 @@ void ZnpActorProcess(PZNPACTOROPTION option)
 	mosquitto_lib_cleanup();
 }
 
-void ZnpActorCreate(PZNPACTOROPTION option)
+void ZnpActorStart(PZNPACTOROPTION option)
 {
 	pthread_create(&znpActorThread, NULL, (void*)&ZnpActorProcess, (void*)option);
+	pthread_detach(znpActorThread);
 }
