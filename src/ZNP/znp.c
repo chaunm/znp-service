@@ -152,6 +152,22 @@ BOOL ZnpInit(PSERIAL pSerialPort)
 		if (nTimeout == 10)
 			return FALSE;
 	}
+#ifdef CLEAR_NETWORK_STATE
+	//reset ZNP network info if needed
+	pCommandData = malloc(sizeof(BYTE));
+	*(PWORD)pCommandData = 0x02;
+	ZnpZbWriteConfig(ZCD_NV_STARTUP_OPTION, sizeof(BYTE), pCommandData);
+	free(pCommandData);
+	ZnpSetState(ZNP_STATE_WAIT_IND, SYS_RESET_IND);
+	while(ZnpGetState() != ZNP_STATE_ACTIVE);
+	{
+		nTimeout++;
+		sleep(1);
+		//timeout reset fail try to reset again
+		if (nTimeout == 10)
+			return FALSE;
+	}
+#endif
 	//Write ZDO_DIRECT_CB_CONFIG
 	pCommandData = malloc(sizeof(BYTE));
 	*pCommandData = 1;
@@ -172,6 +188,7 @@ BOOL ZnpInit(PSERIAL pSerialPort)
 	*(PDWORD)pCommandData = 0x00000800;
 	ZnpZbWriteConfig(ZCD_NV_CHANLIST, sizeof(DWORD), pCommandData);
 	free(pCommandData);
+
 
 	while (ZnpGetState() != ZNP_STATE_ACTIVE);
 	//Register AF Endpoint
