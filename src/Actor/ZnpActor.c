@@ -203,7 +203,7 @@ static void ZnpActorCreat(char* guid, char* psw)
 		printf("Couldn't create actor\n");
 		return;
 	}
-	ActorRegisterCallback(pZnpActor, ":request/add_device", ZnpActorOnRequestAddDevice, CALLBACK_RETAIN);
+	ActorRegisterCallback(pZnpActor, ":request/add_devices", ZnpActorOnRequestAddDevice, CALLBACK_RETAIN);
 	ActorRegisterCallback(pZnpActor, ":request/remove_device", ZnpActorOnRequestRemoveDevice, CALLBACK_RETAIN);
 }
 
