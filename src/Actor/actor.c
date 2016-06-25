@@ -136,6 +136,7 @@ PACTOR ActorCreate(char* guid, char* psw)
 	if ((guid == NULL))
 		return NULL;
 	PACTOR pActor = (PACTOR)malloc(sizeof(ACTOR));
+	memset(pActor, 0, sizeof(ACTOR));
 	pActor->guid = StrDup(guid);
 	pActor->psw = StrDup(psw);
 	ActorConnect(pActor, pActor->guid, pActor->psw);
