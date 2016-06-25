@@ -325,6 +325,7 @@ void ActorReceive(PACTOR pActor, char* topicName, char* payload)
 			relTopicSize += strlen(*(TopicNameSplit + i)) + 1;
 			i++;
 		}
+		relTopicSize++;
 		relTopic = malloc(relTopicSize);
 		memset(relTopic, 0, relTopicSize);
 		sprintf(relTopic,"%s", *(TopicNameSplit + relTopicPosition));
