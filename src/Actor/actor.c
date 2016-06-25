@@ -269,7 +269,12 @@ void ActorSend(PACTOR pActor, char* topicName, char* message, ACTORCALLBACKFN ca
 
 	if (callback != NULL)
 	{
-		ActorRegisterCallback(pActor, json_string_value(json_object_get(jsonMessage, "id")), callback, CALLBACK_ONCE);
+		jsonHeader = json_object_get(jsonMessage, "header");
+		if (jsonHeader != NULL)
+		{
+			ActorRegisterCallback(pActor, json_string_value(json_object_get(jsonHeader, "id")), callback, CALLBACK_ONCE);
+			json_decref(jsonHeader);
+		}
 	}
 	json_decref(jsonMessage);
 	free(sendBuffer);
