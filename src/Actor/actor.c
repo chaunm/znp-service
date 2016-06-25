@@ -14,10 +14,7 @@
 #include "actor.h"
 #include "universal.h"
 #include "common/ActorParser.h"
-
-#ifdef PI_RUNNING
 #include "unistd.h"
-#endif
 
 int ActorConnect(PACTOR pACtor, char* guid, char* psw);
 void ActorOnMessage(struct mosquitto* client, void* context, const struct mosquitto_message* message);
@@ -139,7 +136,6 @@ PACTOR ActorCreate(char* guid, char* psw)
 	if ((guid == NULL))
 		return NULL;
 	PACTOR pActor = (PACTOR)malloc(sizeof(ACTOR));
-	memset(pActor, 0, sizeof(ACTOR));
 	pActor->guid = StrDup(guid);
 	pActor->psw = StrDup(psw);
 	ActorConnect(pActor, pActor->guid, pActor->psw);
@@ -241,19 +237,30 @@ int ActorConnect(PACTOR pActor, char* guid, char* psw)
 
 void ActorSend(PACTOR pActor, char* topicName, char* message, ACTORCALLBACKFN callback, char bIdGen)
 {
-	json_t* jsonMesage;
+	json_t* jsonMessage;
+	json_t* jsonHeader;
+	json_t* jsonId = NULL;
 	char* sendBuffer;
 	if ((topicName == NULL) || (message == NULL))
 		return;
-	jsonMesage = json_loads(message, JSON_DECODE_ANY, NULL);
-	if ((!json_object_get(jsonMesage, "id")) && (bIdGen == TRUE))
+	jsonMessage = json_loads(message, JSON_DECODE_ANY, NULL);
+	jsonHeader = json_object_get(jsonMessage, "header");
+	if (jsonHeader != NULL)
+	{
+		jsonId = json_object_get(jsonHeader, "id");
+	}
+	if ((jsonId == NULL) && (bIdGen == TRUE))
 	{
 		char* uuidString = ActorCreateUuidString();
 		json_t* uuidJson = json_string(uuidString);
-		json_object_set(jsonMesage, "id", uuidJson);
+		if (jsonHeader == NULL)
+			jsonHeader = json_object();
+		json_object_set(jsonHeader, "id", uuidJson);
+		json_object_set(jsonMessage, "header", jsonHeader);
 		json_decref(uuidJson);
+		json_decref(jsonHeader);
 		free(uuidString);
-		sendBuffer = json_dumps(jsonMesage, JSON_INDENT(4) | JSON_REAL_PRECISION(4));
+		sendBuffer = json_dumps(jsonMessage, JSON_INDENT(4) | JSON_REAL_PRECISION(4));
 	}
 	else
 		sendBuffer = StrDup(message);
@@ -262,9 +269,9 @@ void ActorSend(PACTOR pActor, char* topicName, char* message, ACTORCALLBACKFN ca
 
 	if (callback != NULL)
 	{
-		ActorRegisterCallback(pActor, json_string_value(json_object_get(jsonMesage, "id")), callback, CALLBACK_ONCE);
+		ActorRegisterCallback(pActor, json_string_value(json_object_get(jsonMessage, "id")), callback, CALLBACK_ONCE);
 	}
-	json_decref(jsonMesage);
+	json_decref(jsonMessage);
 	free(sendBuffer);
 }
 
@@ -376,8 +383,8 @@ void ActorReceive(PACTOR pActor, char* topicName, char* payload)
 		}
 
 		// should check id before get
-		json_t* requestIdJson = json_object_get(responseJsonReq, "id");
-		if (requestIdJson == NULL)
+		json_t* headerJson = json_object_get(responseJsonReq, "header");
+		if (headerJson == NULL)
 		{
 			json_decref(receiveJsonMessage);
 			json_decref(responseJsonReq);
@@ -392,9 +399,27 @@ void ActorReceive(PACTOR pActor, char* topicName, char* payload)
 			ActorFreeSplitMessage(messageSplit);
 			return;
 		}
+		json_t* requestIdJson = json_object_get(headerJson, "id");
+		if (requestIdJson == NULL)
+		{
+			json_decref(receiveJsonMessage);
+			json_decref(responseJsonReq);
+			json_decref(headerJson);
+			if (*TopicNameSplit)
+			{
+				for (i = 0; *(TopicNameSplit + i); i++)
+				{
+					free(*(TopicNameSplit + i));
+				}
+				free(TopicNameSplit);
+			}
+			ActorFreeSplitMessage(messageSplit);
+			return;
+		}
 		pParamMessage = StrDup(payload);
 		// creat event
-		ActorEmitEvent(pActor, json_string_value(requestIdJson), pParamMessage);
+		if (json_is_string(requestIdJson))
+			ActorEmitEvent(pActor, json_string_value(requestIdJson), pParamMessage);
 		json_decref(requestIdJson);
 		json_decref(responseJsonReq);
 		json_decref(receiveJsonMessage);
