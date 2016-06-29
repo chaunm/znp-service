@@ -61,7 +61,7 @@ int main(int argc, char* argv[])
 		switch (opt) {
 		case 'h' :
 			PrintHelpMenu();
-			exit(EXIT_SUCCESS);
+			return EXIT_SUCCESS;
 			break;
 		case 'p' :
 			SerialPort = StrDup(optarg);
@@ -74,7 +74,10 @@ int main(int argc, char* argv[])
 			break;
 		case ':':
 			if ((optopt == 'i') || optopt == 'p')
+			{
 				printf("invalid option(s), using -h for help\n");
+				return EXIT_FAILURE;
+			}
 			break;
 		default:
 			break;
