@@ -85,7 +85,7 @@ VOID SerialClose(PSERIAL pSerialPort)
 static VOID SerialHandleIncomingByte(PSERIAL pSerialPort, BYTE byData)
 {
 	BYTE nIndex;
-	if ((g_nPackageIndex == 0) && (byData = 0xFE))
+	if ((g_nPackageIndex == 0) && (byData == 0xFE))
 	{
 		g_pReceivePackage[g_nPackageIndex] = 0xFE;
 		g_nPackageIndex++;
