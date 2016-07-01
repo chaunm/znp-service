@@ -138,7 +138,7 @@ int main(int argc, char* argv[])
 			{
 				printf("can not start ZNP after 5 times, exit program\n");
 				LogWrite("Can't not start ZNP apfter 5 times, exit program");
-				ZnpActorPublishZnpStatus("status.znp_start_error");
+				ZnpActorPublishZnpStatus("status.offline.znp_start_error");
 				exit(0);
 			}
 			printf("ZNP reset fail, retry\n");

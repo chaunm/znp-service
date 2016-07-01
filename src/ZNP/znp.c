@@ -255,7 +255,7 @@ VOID ZnpStateProcess()
 			stZnpDevice.nZnpTimeout--;
 			if (stZnpDevice.nZnpTimeout == 0)
 			{
-				ZnpActorPublishZnpStatus("status.offline");
+				ZnpActorPublishZnpStatus("status.offline.znp_comm_fail");
 			}
 		}
 	}
