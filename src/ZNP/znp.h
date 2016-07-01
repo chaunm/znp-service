@@ -28,6 +28,10 @@
 #define ZNP_DEVICE_TYPE_COORDINATOR		0x00
 #define ZNP_DEVICE_TYPE_ROUTER			0x01
 #define ZNP_DEVICE_TYPE_ENDDEVICE		0x02
+/* time for waiting response from ZNP */
+#define ZNP_WAIT_RESPONSE_TIME			10
+#define ZNP_WAIT_IND_TIME				10
+#define ZNP_DEFAULT_STATUS_UPDATE_TIME	20
 
 /* define ZNP Command */
 #pragma pack(1)
@@ -37,6 +41,8 @@ typedef struct tagZNPDEVICE {
 	WORD nShortAddress;
 	BYTE nZnpState;
 	BYTE nZdoState;
+	BYTE nZnpTimeout;
+	BYTE nStatusUpdateTime;
 	WORD nZnpActiveCommand;
 } ZNPDEVICE, *PZNPDEVICE;
 
@@ -82,5 +88,6 @@ IEEEADDRESS ZnpGetIeeeAddr();
 VOID ZnpSetShortAddr(WORD nShortAddr);
 WORD ZnpGetShortAddr();
 BYTE ZnpGetDefaultEp();
-BOOL ZnpInit(PSERIAL pSerialPort);
+BOOL ZnpInit(PSERIAL pSerialPort, WORD nStatusUpdateTime);
+VOID ZnpStateProcess();
 #endif /* ZNP_H_ */

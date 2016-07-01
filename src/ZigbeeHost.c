@@ -26,7 +26,8 @@ void PrintHelpMenu() {
 			"using ./ZigbeeHostAMA --port [] --id [] --token []\n"
 			"--port: Serial port used to communicate with ZNP device (ex.: ttyUSB0, ttyAMA0..)\n"
 			"--id: guid of the znp actor\n"
-			"--token: pasword to the broker of the znp actor, this option can be omitted\n");
+			"--token: pasword to the broker of the znp actor, this option can be omitted\n"
+			"--update: time for updating online message to system");
 }
 
 int main(int argc, char* argv[])
@@ -47,12 +48,14 @@ int main(int argc, char* argv[])
 	char *token = NULL;
 	char *guid = NULL;
 	char *SerialPort = NULL;
+	WORD ttl = 0;
 
 	// specific the expected option
 	static struct option long_options[] = {
 			{"id",      required_argument, 0, 'i' },
 			{"token", 	required_argument, 0, 't' },
-			{"port",    required_argument, 0, 'p' }
+			{"port",    required_argument, 0, 'p' },
+			{"update", 	required_argument, 0, 'u' }
 	};
 	int long_index;
 	/* Process option */
@@ -71,6 +74,9 @@ int main(int argc, char* argv[])
 			break;
 		case 't':
 			token = StrDup(optarg);
+			break;
+		case 'u':
+			ttl = atoi(optarg);
 			break;
 		case ':':
 			if ((optopt == 'i') || optopt == 'p')
@@ -119,7 +125,7 @@ int main(int argc, char* argv[])
 		SerialThreadErr = pthread_create(&SerialOutputThread, NULL, (void*)&SerialOutputDataProcess, (void*)pSerialPort);
 		SerialThreadErr = pthread_create(&SerialHandleThread, NULL, (void*)&SerialInputDataProcess, (void*)pSerialPort);
 		// init znp device
-		bResult = ZnpInit(pSerialPort);
+		bResult = ZnpInit(pSerialPort, ttl);
 		if (bResult == FALSE)
 		{
 			// close serial port to retry
@@ -132,11 +138,13 @@ int main(int argc, char* argv[])
 			{
 				printf("can not start ZNP after 5 times, exit program\n");
 				LogWrite("Can't not start ZNP apfter 5 times, exit program");
+				ZnpActorPublishZnpStatus("status.znp_start_error");
 				exit(0);
 			}
 			printf("ZNP reset fail, retry\n");
 			LogWrite("ZNP reset failed, retry");
 		}
+		ZnpActorPublishZnpStatus("status.online");
 		printf("ZNP start success\n");
 		LogWrite("ZNP start success");
 	}
@@ -146,6 +154,7 @@ int main(int argc, char* argv[])
 		DeviceProcessTimeout();
 		ZclMsgStatusProcess();
 		ZnpCmdStateProcess();
+		ZnpStateProcess();
 		sleep(1);
 	}
 	SerialClose(pSerialPort);

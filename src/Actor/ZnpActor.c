@@ -397,6 +397,24 @@ void ZnpActorPublishDeviceErrorEvent(IEEEADDRESS macId, WORD error)
 	free(eventMessage);
 }
 
+void ZnpActorPublishZnpStatus(char* status)
+{
+	if (pZnpActor == NULL) return;
+	json_t* eventJson = json_object();
+	json_t* paramsJson = json_object();
+	json_t* statusJson = json_string(status);
+	json_object_set(paramsJson, "status", statusJson);
+	json_object_set(eventJson, "params", paramsJson);
+	char* eventMessage = json_dumps(eventJson, JSON_INDENT(4) | JSON_REAL_PRECISION(4));
+	char* topicName = ActorMakeTopicName(pZnpActor->guid, "/:event/status");
+	ActorSend(pZnpActor, topicName, eventMessage, NULL, FALSE);
+	json_decref(statusJson);
+	json_decref(paramsJson);
+	json_decref(eventJson);
+	free(topicName);
+	free(eventMessage);
+}
+
 PZNPACTORDATA ZnpActorMakeData(char* dataName, BYTE nDataType, void* data, BYTE dataLen)
 {
 	if (dataName == NULL)

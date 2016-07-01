@@ -5,6 +5,7 @@
  *      Author: ChauNM
  */
 #include <stdio.h>
+#include "ZnpActor.h"
 #include "serialcommunication.h"
 #include "ZnpCommandState.h"
 #include "queue.h"
@@ -56,6 +57,12 @@ VOID ZnpSetState(BYTE nState, WORD nActiveCommand)
 {
 	stZnpDevice.nZnpState = nState;
 	stZnpDevice.nZnpActiveCommand = nActiveCommand;
+	if (nState == ZNP_STATE_WAIT_RSP)
+		stZnpDevice.nZnpTimeout = ZNP_WAIT_RESPONSE_TIME;
+	else if (nState == ZNP_STATE_WAIT_IND)
+		stZnpDevice.nZnpTimeout = ZNP_WAIT_IND_TIME;
+	else
+		stZnpDevice.nZnpTimeout = 0;
 	/*
 	if (nState != ZNP_STATE_ACTIVE)
 		QueueSetState((stZnpDevice.pSerialPort)->pOutputQueue, QUEUE_WAIT);
@@ -126,7 +133,7 @@ VOID ZnpStart()
 	}
 }
 
-BOOL ZnpInit(PSERIAL pSerialPort)
+BOOL ZnpInit(PSERIAL pSerialPort, WORD nStatusUpdateTime)
 {
 	BYTE nTimeout = 0;
 	PQUEUECONTENT pCommandContent;
@@ -134,6 +141,11 @@ BOOL ZnpInit(PSERIAL pSerialPort)
 	stZnpDevice.nZnpState = ZNP_STATE_ACTIVE;
 	stZnpDevice.nZdoState = ZNP_ZIGBEE_STATE_HOLD;
 	stZnpDevice.nZnpActiveCommand = 0;
+	if (nStatusUpdateTime != 0)
+		stZnpDevice.nStatusUpdateTime = nStatusUpdateTime;
+	else
+		stZnpDevice.nStatusUpdateTime = ZNP_DEFAULT_STATUS_UPDATE_TIME;
+	stZnpDevice.nZnpTimeout = 0;
 	//Send reset command
 	PBYTE pCommandData = malloc(sizeof(BYTE));
 	//Reset ZNP if reset fail return
@@ -188,8 +200,6 @@ BOOL ZnpInit(PSERIAL pSerialPort)
 	*(PDWORD)pCommandData = 0x00000800;
 	ZnpZbWriteConfig(ZCD_NV_CHANLIST, sizeof(DWORD), pCommandData);
 	free(pCommandData);
-
-
 	while (ZnpGetState() != ZNP_STATE_ACTIVE);
 	//Register AF Endpoint
 	printf("Register AF Endpoint\n");
@@ -235,4 +245,27 @@ VOID ZnpHandleCommand(PBYTE pBuffer, BYTE nLength)
 		ZnpSetState(ZNP_STATE_ACTIVE, 0);
 }
 
-
+VOID ZnpStateProcess()
+{
+	static BYTE nTimeCount = 0;
+	if (stZnpDevice.nZnpState != ZNP_STATE_ACTIVE)
+	{
+		if (stZnpDevice.nZnpTimeout > 0)
+		{
+			stZnpDevice.nZnpTimeout--;
+			if (stZnpDevice.nZnpTimeout == 0)
+			{
+				ZnpActorPublishZnpStatus("status.offline");
+			}
+		}
+	}
+	else
+	{
+		nTimeCount++;
+		if (nTimeCount == stZnpDevice.nStatusUpdateTime)
+		{
+			nTimeCount = 0;
+			ZnpActorPublishZnpStatus("status.online");
+		}
+	}
+}

@@ -47,6 +47,7 @@ void ZnpActorPublishDeviceRemovedEvent(IEEEADDRESS macId);
 void ZnpActorPublishDeviceOfflineEvent(IEEEADDRESS macId);
 void ZnpActorPublishDeviceOnlineEvent(IEEEADDRESS macId);
 void ZnpActorPublishDeviceErrorEvent(IEEEADDRESS macId, WORD error);
+void ZnpActorPublishZnpStatus(char* status);
 PZNPACTORDATA ZnpActorMakeData(char* dataName, BYTE nDataType, void* data, BYTE dataLen);
 void ZnpActorDestroyZnpData(PZNPACTORDATA pData);
 void ZnpActorPublishDeviceDataEvent(IEEEADDRESS macId, BYTE endPoint, BYTE nDataCount, PZNPACTORDATA *pData);
