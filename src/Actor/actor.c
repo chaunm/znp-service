@@ -16,7 +16,7 @@
 #include "common/ActorParser.h"
 #include "unistd.h"
 
-int ActorConnect(PACTOR pACtor, char* guid, char* psw);
+int ActorConnect(PACTOR pACtor, char* guid, char* psw, char* inPost, WORD inPort);
 void ActorOnMessage(struct mosquitto* client, void* context, const struct mosquitto_message* message);
 void ActorOnOffline(struct mosquitto* client, void * context, int cause);
 void ActorOnConnect(struct mosquitto* client, void* context, int result);
@@ -132,7 +132,7 @@ void ActorProcessEvent(PACTOR pActor)
 	}
 }
 
-PACTOR ActorCreate(char* guid, char* psw)
+PACTOR ActorCreate(char* guid, char* psw, char* host, WORD port)
 {
 	if ((guid == NULL))
 		return NULL;
@@ -140,7 +140,15 @@ PACTOR ActorCreate(char* guid, char* psw)
 	memset(pActor, 0, sizeof(ACTOR));
 	pActor->guid = StrDup(guid);
 	pActor->psw = StrDup(psw);
-	ActorConnect(pActor, pActor->guid, pActor->psw);
+	if (host != NULL)
+		pActor->host = StrDup(host);
+	else
+		pActor->host = StrDup(HOST);
+	if (port != 0)
+		pActor->port = port;
+	else
+		pActor->port = PORT;
+	ActorConnect(pActor, pActor->guid, pActor->psw, pActor->host, pActor->port);
 	pActor->pEvent = NULL;
 	pActor->pActorCallback = NULL;
 	if (pActor->client != NULL)
@@ -182,12 +190,22 @@ void ActorDelete(PACTOR pActor)
 	free(pActor);
 }
 
-int ActorConnect(PACTOR pActor, char* guid, char* psw)
+int ActorConnect(PACTOR pActor, char* guid, char* psw, char* inHost, WORD inPort)
 {
 
     int rc;
     char* topicName;
     struct mosquitto* client;
+    WORD port;
+    char* host;
+    if (inPort != 0)
+    	port = inPort;
+    else
+    	port = PORT;
+    if (inHost != NULL)
+    	host = StrDup(inHost);
+    else
+    	host = StrDup(HOST);
     if (pActor->client == NULL)
     {
     	client = mosquitto_new(guid, TRUE, (void*)pActor);
@@ -209,15 +227,16 @@ int ActorConnect(PACTOR pActor, char* guid, char* psw)
     printf("%s connected to %s at port %d\n", pActor->guid, HOST, PORT);
     printf("id: %s, password: %s\n", guid, psw);
     pActor->connected = 0;
-    rc = mosquitto_connect(client, HOST, PORT, 60);
+    rc = mosquitto_connect(client, host, port, 60);
     while (rc != MOSQ_ERR_SUCCESS)
     {
         //mosquitto_destroy(client);
         printf("%s Failed to connect, return code %d\n", guid, rc);
         //pActor->client = NULL;
-        rc = mosquitto_connect(client, HOST, PORT, 60);
+        rc = mosquitto_connect(client, host, port, 60);
         sleep(5);
     }
+    free(host);
 
     topicName = ActorMakeTopicName(guid, "/:request/#");
     printf("subscribe to topic %s\n", topicName);
@@ -477,7 +496,7 @@ void ActorOnOffline(struct mosquitto* client, void * context, int cause)
 	PACTOR pActor = (PACTOR)context;
 	while (rc != 0)
 	{
-		rc = ActorConnect(pActor, pActor->guid, pActor->psw);
+		rc = ActorConnect(pActor, pActor->guid, pActor->psw, pActor->host, pActor->port);
 		if (rc != 0)
 			printf("reconnected fail\n");
 		else

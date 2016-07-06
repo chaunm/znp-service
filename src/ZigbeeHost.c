@@ -27,6 +27,8 @@ void PrintHelpMenu() {
 			"--port: Serial port used to communicate with ZNP device (ex.: ttyUSB0, ttyAMA0..)\n"
 			"--id: guid of the znp actor\n"
 			"--token: pasword to the broker of the znp actor, this option can be omitted\n"
+			"--mqtt_host: mqtt server address can be ommitted\n"
+			"--mqtt_port: mqtt port - can be omitted\n"
 			"--update: time for updating online message to system");
 }
 
@@ -48,14 +50,18 @@ int main(int argc, char* argv[])
 	char *token = NULL;
 	char *guid = NULL;
 	char *SerialPort = NULL;
+	char *mqttHost = NULL;
+	WORD mqttPort = 0;
 	WORD ttl = 0;
 
 	// specific the expected option
 	static struct option long_options[] = {
 			{"id",      required_argument, 0, 'i' },
 			{"token", 	required_argument, 0, 't' },
-			{"port",    required_argument, 0, 'p' },
-			{"update", 	required_argument, 0, 'u' }
+			{"serial",    required_argument, 0, 's' },
+			{"update", 	required_argument, 0, 'u' },
+			{"host", required_argument, 0, 'H'},
+			{"port", required_argument, 0, 'p'}
 	};
 	int long_index;
 	/* Process option */
@@ -66,7 +72,7 @@ int main(int argc, char* argv[])
 			PrintHelpMenu();
 			return EXIT_SUCCESS;
 			break;
-		case 'p' :
+		case 's' :
 			SerialPort = StrDup(optarg);
 			break;
 		case 'i':
@@ -77,6 +83,12 @@ int main(int argc, char* argv[])
 			break;
 		case 'u':
 			ttl = atoi(optarg);
+			break;
+		case 'H':
+			mqttHost = StrDup(optarg);
+			break;
+		case 'p':
+			mqttPort = atoi(optarg);
 			break;
 		case ':':
 			if ((optopt == 'i') || optopt == 'p')
@@ -98,6 +110,8 @@ int main(int argc, char* argv[])
 	ZNPACTOROPTION option;
 	option.guid = guid;
 	option.psw = token;
+	option.host = mqttHost;
+	option.port = mqttPort;
 	puts("Program start");
 	LogWrite("Zigbee host start. start init ZNP");
 	// Init device organization list

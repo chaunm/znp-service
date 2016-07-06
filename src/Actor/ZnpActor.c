@@ -194,9 +194,9 @@ static void ZnpActorOnRequestRemoveDevice(PVOID pParam)
 	free(responseTopic);
 }
 
-static void ZnpActorCreat(char* guid, char* psw)
+static void ZnpActorCreat(char* guid, char* psw, char* host, WORD port)
 {
-	pZnpActor = ActorCreate(guid, psw);
+	pZnpActor = ActorCreate(guid, psw, host, port);
 	//Register callback to handle request package
 	if (pZnpActor == NULL)
 	{
@@ -518,7 +518,7 @@ void ZnpActorPublishDeviceDataEvent(IEEEADDRESS macId, BYTE endPoint, BYTE nData
 void ZnpActorProcess(PZNPACTOROPTION option)
 {
 	mosquitto_lib_init();
-	ZnpActorCreat(option->guid, option->psw);
+	ZnpActorCreat(option->guid, option->psw, option->host, option->port);
 	if (pZnpActor == NULL)
 	{
 		mosquitto_lib_cleanup();

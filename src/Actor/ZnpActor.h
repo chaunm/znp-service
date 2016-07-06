@@ -21,6 +21,8 @@ typedef struct tagZNPDEVICEADDDATA {
 typedef struct tagZNPACTOROPTION {
 	char* guid;
 	char* psw;
+	char* host;
+	WORD port;
 }ZNPACTOROPTION, *PZNPACTOROPTION;
 
 #pragma pack(1)
