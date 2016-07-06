@@ -24,11 +24,11 @@
 void PrintHelpMenu() {
 	printf("program: ZigbeeHostAMA\n"
 			"using ./ZigbeeHostAMA --port [] --id [] --token []\n"
-			"--port: Serial port used to communicate with ZNP device (ex.: ttyUSB0, ttyAMA0..)\n"
+			"--serial: Serial port used to communicate with ZNP device (ex.: ttyUSB0, ttyAMA0..)\n"
 			"--id: guid of the znp actor\n"
 			"--token: pasword to the broker of the znp actor, this option can be omitted\n"
-			"--mqtt_host: mqtt server address can be ommitted\n"
-			"--mqtt_port: mqtt port - can be omitted\n"
+			"--host: mqtt server address can be ommitted\n"
+			"--port: mqtt port - can be omitted\n"
 			"--update: time for updating online message to system");
 }
 
@@ -65,7 +65,7 @@ int main(int argc, char* argv[])
 	};
 	int long_index;
 	/* Process option */
-	while ((opt = getopt_long(argc, argv,":hi:t:p:",
+	while ((opt = getopt_long(argc, argv,":hi:t:s:u:H:p:",
 			long_options, &long_index )) != -1) {
 		switch (opt) {
 		case 'h' :

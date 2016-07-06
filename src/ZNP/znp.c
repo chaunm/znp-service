@@ -209,7 +209,7 @@ BOOL ZnpInit(PSERIAL pSerialPort, WORD nStatusUpdateTime)
 	// Get device info
 	ZnpUtilGetDeviceInfo();
 	//Permit join request
-	ZnpZbPermitJoiningReq(0xFFFC, 30);
+	ZnpZbPermitJoiningReq(0xFFFC, 255);
 	LogWrite("ZNP initialize success");
 	return TRUE;
 }
