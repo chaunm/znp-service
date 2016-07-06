@@ -156,9 +156,9 @@ PACTOR ActorCreate(char* guid, char* psw, char* host, WORD port)
 	ActorConnect(pActor, pActor->guid, pActor->psw, pActor->host, pActor->port);
 	pActor->pEvent = NULL;
 	pActor->pActorCallback = NULL;
-	ActorRegisterCallback(pActor, ":request/stop", ActorOnRequestStop, CALLBACK_RETAIN);
 	if (pActor->client != NULL)
 	{
+		ActorRegisterCallback(pActor, ":request/stop", ActorOnRequestStop, CALLBACK_RETAIN);
 		return pActor;
 	}
 	else

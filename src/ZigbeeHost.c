@@ -107,7 +107,7 @@ int main(int argc, char* argv[])
 		return EXIT_FAILURE;
 	}
 	/* All option valid, start program */
-	ZNPACTOROPTION option;
+	ACTOROPTION option;
 	option.guid = guid;
 	option.psw = token;
 	option.host = mqttHost;

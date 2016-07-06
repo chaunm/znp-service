@@ -28,6 +28,8 @@ typedef void* CallbackParam;
 typedef struct tagACTOROPTION {
 	char* guid;
 	char* psw;
+	char* host;
+	WORD port;
 } ACTOROPTION, *PACTOROPTION;
 
 typedef struct tagACTOREVENT {
@@ -54,6 +56,7 @@ typedef struct tagACTOR {
 	char* host;
 	WORD port;
 }ACTOR, *PACTOR;
+
 
 /* make an unique guid for actor by combine a prefix with a generated uuid
  * the result guid has the from of prefix-generated-uuid

@@ -515,7 +515,7 @@ void ZnpActorPublishDeviceDataEvent(IEEEADDRESS macId, BYTE endPoint, BYTE nData
 	free(eventMessage);
 }
 
-void ZnpActorProcess(PZNPACTOROPTION option)
+void ZnpActorProcess(PACTOROPTION option)
 {
 	mosquitto_lib_init();
 	ZnpActorCreat(option->guid, option->psw, option->host, option->port);
@@ -535,7 +535,7 @@ void ZnpActorProcess(PZNPACTOROPTION option)
 	mosquitto_lib_cleanup();
 }
 
-void ZnpActorStart(PZNPACTOROPTION option)
+void ZnpActorStart(PACTOROPTION option)
 {
 	pthread_create(&znpActorThread, NULL, (void*)&ZnpActorProcess, (void*)option);
 	pthread_detach(znpActorThread);
