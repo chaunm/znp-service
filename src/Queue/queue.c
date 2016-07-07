@@ -9,7 +9,7 @@
 #include "stddef.h"
 #include "stdio.h"
 #include "stdlib.h"
-
+#include "../fluent-logger/fluent-logger.h"
 PQUEUECONTROL QueueCreate(BYTE nQueueSize, BYTE nBufferSize)
 {
 	PBYTE pQueueContent;
@@ -59,12 +59,14 @@ BYTE QueuePush(void* pSource, BYTE nSize, PQUEUECONTROL pQueue)
 	if (pQueue == NULL) return 1;
 	if (pQueue->nFreePointer == pQueue->nCurrentPointer)
 	{
-		printf("queue is full\n");
+		//printf("queue is full\n");
+		FLUENT_LOGGER_WARN("Queue full");
 		return 1;
 	}
 	if (nSize > pQueue->nBufferSize)
 	{
-		printf("input data is too large");
+		FLUENT_LOGGER_WARN("Input data is too large");
+		//printf("input data is too large");
 		return 1;
 	}
 	pQueue->pContentLength[pQueue->nFreePointer] = nSize;

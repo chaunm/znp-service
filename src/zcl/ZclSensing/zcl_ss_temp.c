@@ -13,7 +13,7 @@
 #include "ZNP_AF/ZnpAf.h"
 #include "ZNP_ZDO/Znp_Zdo.h"
 #include "ZnpActor.h"
-
+#include "../fluent-logger/fluent-logger.h"
 //#include "mqtt_client.h"
 
 VOID ZclSsTempAttrInit(PZCLSSTEMPATTR pData)
@@ -140,6 +140,7 @@ VOID ZclSsTempParseWriteAttrRsp(WORD nNwkAddr, BYTE nEp, PBYTE pData, BYTE nLeng
 		else
 			printf("fail\n");
 		nLength -= sizeof(ZCLATTRWRITERSPSTRUCT);
+		pWriteRsp++;
 	}
 }
 
@@ -169,6 +170,7 @@ VOID ZclSsTempParseAttrReport(WORD nNwkAddr, BYTE nEp, PBYTE pData, BYTE nLen)
 			LogWrite(pLogString);
 			printf("Attribute Report - Address: 0x%04X, Endpoint: 0x%02X, Cluster ID: 0x%04X, Attr ID: 0x%04X, Value:%d\n",
 					nNwkAddr, nEp, ZCL_CLUSTER_ID_MS_TEMPERATURE_MEASUREMENT, pReportData->nAttrID, pClusterAttr->nMeasuredValue);
+			FLUENT_LOGGER_INFO(pLogString);
 			free(pLogString);
 			double znpValue = ((double)(pClusterAttr->nMeasuredValue)) / 100;
 			znpData = ZnpActorMakeData("temperature", ZNP_DATA_TYPE_FLOAT, &znpValue, sizeof(znpValue));
@@ -184,7 +186,7 @@ VOID ZclSsTempParseAttrReport(WORD nNwkAddr, BYTE nEp, PBYTE pData, BYTE nLen)
 			sprintf(pLogString, "Attribute Report - Address: 0x%04X, Endpoint: 0x%02X, Cluster ID: 0x%04X, Attr ID: 0x%04X, Value: %d",
 					nNwkAddr, nEp, ZCL_CLUSTER_ID_MS_TEMPERATURE_MEASUREMENT, pReportData->nAttrID, pClusterAttr->nMeasuredValue);
 			LogWrite(pLogString);
-			//MqttClientPublishMessage(pLogString);
+			FLUENT_LOGGER_INFO(pLogString);
 			printf("Attribute Report - Address: 0x%04X, Endpoint: 0x%02X, Cluster ID: 0x%04X, Attr ID: 0x%04X, Value: %d\n",
 					nNwkAddr, nEp, ZCL_CLUSTER_ID_MS_TEMPERATURE_MEASUREMENT, pReportData->nAttrID, pClusterAttr->nMinValue);
 			free(pLogString);
@@ -198,7 +200,7 @@ VOID ZclSsTempParseAttrReport(WORD nNwkAddr, BYTE nEp, PBYTE pData, BYTE nLen)
 			sprintf(pLogString, "Attribute Report - Address: 0x%04X, Endpoint: 0x%02X, Cluster ID: 0x%04X, Attr ID: 0x%04X, Value: 0x%d",
 					nNwkAddr, nEp, ZCL_CLUSTER_ID_MS_TEMPERATURE_MEASUREMENT, pReportData->nAttrID, pClusterAttr->nMeasuredValue);
 			LogWrite(pLogString);
-			//MqttClientPublishMessage(pLogString);
+			FLUENT_LOGGER_INFO(pLogString);
 			printf("Attribute Report - Address: 0x%04X, Endpoint: 0x%02X, Cluster ID: 0x%04X, Attr ID: 0x%04X, Value: %d\n",
 					nNwkAddr, nEp, ZCL_CLUSTER_ID_MS_TEMPERATURE_MEASUREMENT, pReportData->nAttrID, pClusterAttr->nMaxValue);
 			free(pLogString);
@@ -212,7 +214,7 @@ VOID ZclSsTempParseAttrReport(WORD nNwkAddr, BYTE nEp, PBYTE pData, BYTE nLen)
 			sprintf(pLogString, "Attribute Report - Address: 0x%04X, Endpoint: 0x%02X, Cluster ID: 0x%04X, Attr ID: 0x%04X, Value: %d",
 					nNwkAddr, nEp, ZCL_CLUSTER_ID_MS_TEMPERATURE_MEASUREMENT, pReportData->nAttrID, pClusterAttr->nTolerance);
 			LogWrite(pLogString);
-			//MqttClientPublishMessage(pLogString);
+			FLUENT_LOGGER_INFO(pLogString);
 			printf("Attribute Report - Address: 0x%04X, Endpoint: 0x%02X, Cluster ID: 0x%04X, Attr ID: 0x%04X, Value: %d\n",
 					nNwkAddr, nEp, ZCL_CLUSTER_ID_MS_TEMPERATURE_MEASUREMENT, pReportData->nAttrID, pClusterAttr->nTolerance);
 			free(pLogString);

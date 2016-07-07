@@ -11,6 +11,7 @@
 #include "DevicesManager.h"
 #include "log.h"
 #include "universal.h"
+#include "../fluent-logger/fluent-logger.h"
 
 static BYTE nZclTranSeq = 1;
 static PZCLMSGSTATUS pFirstAfMsgStatus = NULL;
@@ -89,6 +90,8 @@ VOID ZclMsgStatusProcess()
 			printf("\e[1;31m No response on device 0x%04X transID %d\n\e[1;33m", nDeletedAddress, nDeletedTransId);
 			LogString = (char*)malloc(500);
 			sprintf(LogString, "No response on device 0x%04X transID %d", nDeletedAddress, nDeletedTransId);
+			LogWrite(LogString);
+			FLUENT_LOGGER_WARN(LogString);
 			free(LogString);
 		}
 	}
@@ -107,6 +110,7 @@ BYTE ZclParseReadRspData(WORD nNwkAddr, BYTE nEndpoint, WORD nClusterId, PBYTE p
 	char* LogString = (char*)malloc(255);
 	printf("Attribute read:\n");
 	sprintf(LogString, "Attribute read from 0x%04X endpoint 0x%02X ClusterID 0x%04X", nNwkAddr, nEndpoint, nClusterId);
+	FLUENT_LOGGER_INFO(LogString);
 	LogWrite(LogString);
 	free(LogString);
 	BYTE nIndex = 0;
@@ -208,6 +212,7 @@ BYTE ZclParseReportData(WORD nNwkAddr, BYTE nEp, WORD nClusterId, PBYTE pData, B
 	default:
 		LogString = (char*)malloc(255);
 		sprintf(LogString, "Attribute reported from 0x%04X endpoint 0x%02X cluster 0x%04X", nNwkAddr, nEp, nClusterId);
+		FLUENT_LOGGER_INFO(LogString);
 		LogWrite(LogString);
 		free(LogString);
 		break;

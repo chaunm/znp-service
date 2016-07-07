@@ -13,7 +13,7 @@
 #include "zcl.h"
 #include "universal.h"
 #include "log.h"
-//#include "mqtt_client.h"
+#include "../fluent-logger/fluent-logger.h"
 
 /********************************/
 /* ZCL IAS ZONE CLUSTER PROCESS */
@@ -143,29 +143,21 @@ VOID ZclIasZoneParseWriteAttrRsp(WORD nNwkAddr, BYTE nEp, PBYTE pData, BYTE nLen
 	}
 	while (nLength > 0)
 	{
-		switch (pWriteRsp->nAttrId)
-		{
 		printf("Write attribute 0x%04X ", pWriteRsp->nAttrId);
-		case ZCL_IAS_ZONE_SETTING_ATTR:
-			if (pWriteRsp->nStatus == 0)
-			{
+		if (pWriteRsp->nStatus == 0)
+		{
+			if(pWriteRsp->nAttrId == ZCL_IAS_ZONE_SETTING_ATTR)
 				pAttrData->nZoneSetting = pAttrData->nWriteZoneSetting;
-				printf("success\n");
-			}
-			else
-			{
+			printf("success\n");
+		}
+		else
+		{
+			if(pWriteRsp->nAttrId == ZCL_IAS_ZONE_SETTING_ATTR)
 				pAttrData->nWriteZoneSetting = pAttrData->nZoneSetting;
-				printf("fail\n");
-			}
-			break;
-		default:
-			if (pWriteRsp->nStatus == 0)
-				printf("success\n");
-			else
-				printf("fail\n");
-			break;
+			printf("fail\n");
 		}
 		nLength -= sizeof(ZCLATTRWRITERSPSTRUCT);
+		pWriteRsp++;
 	}
 }
 
@@ -304,6 +296,7 @@ VOID ZclIasZoneParseZoneStatusChange(WORD nNwkAddr, BYTE nEndpoint, PZCLIASZONES
 		printf("Battery low\n");
 		LogString = (char*)malloc(255);
 		sprintf(LogString, "Battery low on device 0x%04X endpoint 0x%02X", nNwkAddr, nEndpoint);
+		FLUENT_LOGGER_WARN(LogString);
 		LogWrite(LogString);
 		free(LogString);
 	}
@@ -622,7 +615,7 @@ VOID ZclIasZoneParseSpecificPackage(WORD nNwkAddr, BYTE nEndpoint, BYTE nCommand
 		sprintf(LogString, "IAS Zone Enrolled request. Address: 0x%04X - Endpoint - 0x%02X:",
 				nNwkAddr, nEndpoint);
 		LogWrite(LogString);
-		//MqttClientPublishMessage(LogString);
+		FLUENT_LOGGER_INFO(LogString);
 		free(LogString);
 		printf("Accept enroll\n");
 		ZclIasZoneAcceptEnroll(nNwkAddr, nEndpoint);
@@ -635,7 +628,7 @@ VOID ZclIasZoneParseSpecificPackage(WORD nNwkAddr, BYTE nEndpoint, BYTE nCommand
 		sprintf(LogString, "Ias Zone status change - Device: 0x%04X - Endpoint: 0x%02X - ClusterID 0x%04X - Status: 0x%04X",
 				nNwkAddr, nEndpoint, ZCL_CLUSTER_ID_SS_IAS_ZONE, (((PZCLIASZONESTATUSCHG)pZclData)->nZoneStatus));
 		LogWrite(LogString);
-		//MqttClientPublishMessage(LogString);
+		FLUENT_LOGGER_INFO(LogString);
 		free(LogString);
 		break;
 	default:

@@ -10,7 +10,7 @@
 #include "ZNP_ZDO/Znp_Zdo.h"
 #include "log.h"
 #include "ZnpActor.h"
-
+#include "../fluent-logger/fluent-logger.h"
 VOID ZclIasAceParseSpecificPackage(WORD nNwkAddr, BYTE nEndpoint, BYTE nCommandId,PBYTE pZclData, BYTE nDataSize)
 {
 	PZCLIASACEARMNOTI pArmNotification = (PZCLIASACEARMNOTI)pZclData;
@@ -30,6 +30,7 @@ VOID ZclIasAceParseSpecificPackage(WORD nNwkAddr, BYTE nEndpoint, BYTE nCommandI
 			LogString = (char*)malloc(255);
 			printf("All Zone disarmed received from 0x%04X endpoint 0x%02X\n", nNwkAddr, nEndpoint);
 			sprintf(LogString, "All Zone disarmed received from 0x%04X endpoint 0x%02X", nNwkAddr, nEndpoint);
+			FLUENT_LOGGER_INFO(LogString);
 			LogWrite(LogString);
 			free(LogString);
 			break;
@@ -40,6 +41,7 @@ VOID ZclIasAceParseSpecificPackage(WORD nNwkAddr, BYTE nEndpoint, BYTE nCommandI
 			LogString = (char*)malloc(255);
 			printf("Only Day Zone armed received from 0x%04X endpoint 0x%02X\n", nNwkAddr, nEndpoint);
 			sprintf(LogString, "Only Day Zone armed received from 0x%04X endpoint 0x%02X", nNwkAddr, nEndpoint);
+			FLUENT_LOGGER_INFO(LogString);
 			LogWrite(LogString);
 			free(LogString);
 			break;
@@ -50,6 +52,7 @@ VOID ZclIasAceParseSpecificPackage(WORD nNwkAddr, BYTE nEndpoint, BYTE nCommandI
 			LogString = (char*)malloc(255);
 			printf("Only Night Zone armed received from 0x%04X endpoint 0x%02X\n", nNwkAddr, nEndpoint);
 			sprintf(LogString, "Only Night Zone armed received from 0x%04X endpoint 0x%02X", nNwkAddr, nEndpoint);
+			FLUENT_LOGGER_INFO(LogString);
 			LogWrite(LogString);
 			free(LogString);
 			break;
@@ -60,6 +63,7 @@ VOID ZclIasAceParseSpecificPackage(WORD nNwkAddr, BYTE nEndpoint, BYTE nCommandI
 			LogString = (char*)malloc(255);
 			printf("All Zone armed received from 0x%04X endpoint 0x%02X\n", nNwkAddr, nEndpoint);
 			sprintf(LogString, "All Zone armed received from 0x%04X endpoint 0x%02X", nNwkAddr, nEndpoint);
+			FLUENT_LOGGER_INFO(LogString);
 			LogWrite(LogString);
 			free(LogString);
 			break;
@@ -69,9 +73,11 @@ VOID ZclIasAceParseSpecificPackage(WORD nNwkAddr, BYTE nEndpoint, BYTE nCommandI
 		break;
 	case ZCL_IAS_ACE_GET_ZONE_ID_MAP_RESPONSE:
 		printf("Get zone ID response\n");
+		FLUENT_LOGGER_INFO("Get zone ID response");
 		break;
 	case ZCL_IAS_ACE_GET_ZONE_INFO_RESPONSE:
 		printf("Get zone info response\n");
+		FLUENT_LOGGER_INFO("Get zone info response");
 		break;
 	default:
 		break;

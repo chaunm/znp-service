@@ -20,6 +20,7 @@
 #include "log.h"
 #include "universal.h"
 #include "ZnpActor.h"
+#include "fluent-logger/fluent-logger.h"
 
 void PrintHelpMenu() {
 	printf("program: ZigbeeHostAMA\n"
@@ -38,11 +39,12 @@ int main(int argc, char* argv[])
 	pthread_t SerialProcessThread;
 	pthread_t SerialOutputThread;
 	pthread_t SerialHandleThread;
+	pthread_t fluentLoggerStartThread;
 	//pthread_t DemoActorThread;
 	PSERIAL	pSerialPort;
 	BOOL bResult = FALSE;
 	BYTE nRetry = 0;
-	int SerialThreadErr;
+//	/int SerialThreadErr;
 
 	/* get option */
 
@@ -107,18 +109,21 @@ int main(int argc, char* argv[])
 		return EXIT_FAILURE;
 	}
 	/* All option valid, start program */
+	LOGGEROPTION loggerOpt;
+	loggerOpt.sender = StrDup(guid);
+	loggerOpt.host = StrDup(mqttHost);
 	ACTOROPTION option;
 	option.guid = guid;
 	option.psw = token;
 	option.host = mqttHost;
 	option.port = mqttPort;
-	puts("Program start");
 	LogWrite("Zigbee host start. start init ZNP");
 	// Init device organization list
 	DeviceListInit();
+	/* Start Logger */
+	pthread_create(&fluentLoggerStartThread, NULL, (void*)&FluentLoggerInit, (void*)&loggerOpt);
 	/* Start Znp actor */
-	//SerialHandleThread = pthread_create(&ZnpActorThread, NULL, (void*)&ZnpActorProcess, (void*)&option);
-	printf("create znp actor\n");
+	FLUENT_LOGGER_INFO("znp actor start");
 	ZnpActorStart(&option);
 	/* open serial port and init queue for serial communication */
 	char* PortName = malloc(strlen("/dev/") + strlen(SerialPort) + 1);
@@ -130,14 +135,15 @@ int main(int argc, char* argv[])
 		pSerialPort = SerialOpen(PortName, B115200);
 		if (pSerialPort == NULL)
 		{
+			FLUENT_LOGGER_ERROR("serial open failed")
 			printf("Can not open serial port %s, try another port\n", PortName);
 			return EXIT_FAILURE;
 		}
 		free(PortName);
 		// Initial Serial port handle process
-		SerialThreadErr = pthread_create(&SerialProcessThread, NULL, (void*)&SerialProcessIncomingData, (void*)pSerialPort);
-		SerialThreadErr = pthread_create(&SerialOutputThread, NULL, (void*)&SerialOutputDataProcess, (void*)pSerialPort);
-		SerialThreadErr = pthread_create(&SerialHandleThread, NULL, (void*)&SerialInputDataProcess, (void*)pSerialPort);
+		pthread_create(&SerialProcessThread, NULL, (void*)&SerialProcessIncomingData, (void*)pSerialPort);
+		pthread_create(&SerialOutputThread, NULL, (void*)&SerialOutputDataProcess, (void*)pSerialPort);
+		pthread_create(&SerialHandleThread, NULL, (void*)&SerialInputDataProcess, (void*)pSerialPort);
 		// init znp device
 		bResult = ZnpInit(pSerialPort, ttl);
 		if (bResult == FALSE)
@@ -152,15 +158,19 @@ int main(int argc, char* argv[])
 			{
 				printf("can not start ZNP after 5 times, exit program\n");
 				LogWrite("Can't not start ZNP apfter 5 times, exit program");
+				FLUENT_LOGGER_ERROR("Can't start ZNP");
 				ZnpActorPublishZnpStatus("status.offline.znp_start_error");
+				sleep(3);
 				exit(0);
 			}
 			printf("ZNP reset fail, retry\n");
+			FLUENT_LOGGER_WARN("couldn't start ZNP, retry");
 			LogWrite("ZNP reset failed, retry");
 		}
 		ZnpActorPublishZnpStatus("status.online");
 		printf("ZNP start success\n");
 		LogWrite("ZNP start success");
+		FLUENT_LOGGER_INFO("ZNP Start success");
 	}
 
 	while (1)

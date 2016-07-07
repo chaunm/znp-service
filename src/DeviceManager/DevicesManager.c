@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "fluentlogger.h"
 #include "DevicesManager.h"
 #include "DeviceDesc.h"
 #include "ZigbeeHaDeviceDesc.h"
@@ -16,7 +17,7 @@
 #include "ZNP_AF/ZnpAf.h"
 #include "log.h"
 #include "ZnpActor.h"
-
+#include "../fluent-logger/fluent-logger.h"
 #ifdef PI_RUNNING
 static char FileName[] = "/home/pi/ZigbeeHost/data/devices.dat";
 #endif
@@ -259,7 +260,10 @@ BYTE DeviceWaitInformed(WORD nNwkAddr, WORD nCommand, BYTE nTransID)
 		if (nTimeout == 0)
 		{
 			LogString = (char*)malloc(500);
-			sprintf(LogString, "No response from device 0x%04X", pDevice->nNetworkAddress);
+			sprintf(LogString, "No response from device 0x%04X for transID %d", pDevice->nNetworkAddress, nTransID);
+			LogWrite(LogString);
+			FLUENT_LOGGER_INFO(LogString);
+			free(LogString);
 			return 1;
 		}
 	}
@@ -322,7 +326,7 @@ VOID DeviceAdd(PZDOANNCEINFO pDeviceInfo)
 		sprintf(LogString, "Device online 0x%04X, IEEE Address: 0x%04X%04X%04X%04X",
 				pDeviceInfo->nNwkAddr, pIeee[3], pIeee[2], pIeee[1], pIeee[0]);
 		LogWrite(LogString);
-		//MqttClientPublishMessage(LogString);
+		FLUENT_LOGGER_INFO(LogString);
 		DeviceListAssoDevice();
 		free(LogString);
 		return;
@@ -339,8 +343,8 @@ VOID DeviceAdd(PZDOANNCEINFO pDeviceInfo)
 	pthread_detach(NewDvConfigThr);
 	sprintf(LogString, "Device online 0x%04X, IEEE Address: 0x%04X%04X%04X%04X",
 			pDeviceInfo->nNwkAddr, pIeee[3], pIeee[2], pIeee[1], pIeee[0]);
+	FLUENT_LOGGER_INFO(LogString);
 	LogWrite(LogString);
-	//MqttClientPublishMessage(LogString);
 	free(LogString);
 	DeviceListAssoDevice();
 }
@@ -358,9 +362,9 @@ VOID DeviceRemove(WORD nNwkAddr)
 	BYTE nEpIndex;
 	BYTE nClusterIndex;
 	char* LogString = (char*)malloc(100);
-
-	sprintf(LogString, "Device off line 0x%04X", nNwkAddr);
+	sprintf(LogString, "Device 0x%04X removed", nNwkAddr);
 	LogWrite(LogString);
+	FLUENT_LOGGER_INFO(LogString);
 	//MqttClientPublishMessage(LogString);
 	free(LogString);
 	if (pCurrentDevice == NULL) return;
@@ -919,6 +923,10 @@ static VOID DeviceGetInfoAndConfig(PWORD pNwkAddr)
 		nStatus = DeviceWaitInformed(pDevInfo->nNetworkAddress, ZDO_SIMPLE_DESC_RSP, 0xFF);
 		if (nStatus == 1)
 		{
+			char* loggerMessage = malloc(250);
+			sprintf(loggerMessage, "No response from device 0x%04X, endpoint %d", *pNwkAddr, pDevInfo->pEndpointInfoList[nEpIndex].nEndPoint);
+			FLUENT_LOGGER_WARN(loggerMessage);
+			free(loggerMessage);
 			printf("\e[1;31mNo response, next\n\e[1;33m");
 		}
 		else
@@ -1129,6 +1137,7 @@ VOID DeviceProcessTimeout()
 				LogString = (char*)malloc(500);
 				sprintf(LogString, "Device timeout 0x%04X:", pDevice->nNetworkAddress);
 				ZnpActorPublishDeviceOfflineEvent(pDevice->IeeeAddr);
+				FLUENT_LOGGER_INFO(LogString);
 				LogWrite(LogString);
 				free(LogString);
 			}

@@ -8,6 +8,7 @@
 #include "serialcommunication.h"
 #include "queue.h"
 #include "znp.h"
+#include "../fluent-logger/fluent-logger.h"
 
 static BYTE 	g_pReceivePackage[MAX_SERIAL_PACKAGE_SIZE];
 static WORD 	g_nPackageIndex;
@@ -68,7 +69,8 @@ PSERIAL SerialOpen(char* PortName, unsigned int uiBaudrate)
  */
 VOID SerialClose(PSERIAL pSerialPort)
 {
-	printf("close serial port \n");
+	FLUENT_LOGGER_INFO("Close serial port");
+	//printf("close serial port \n");
 	QueueFreeMem(pSerialPort->pInputQueue);
 	QueueFreeMem(pSerialPort->pOutputQueue);
 	close(pSerialPort->tty_fd);
@@ -109,6 +111,7 @@ static VOID SerialHandleIncomingByte(PSERIAL pSerialPort, BYTE byData)
 		else
 		{
 			g_nPackageIndex = 0;
+			FLUENT_LOGGER_DEBUG("Invalid package received");
 			printf("Invalid package received");
 		}
 	}

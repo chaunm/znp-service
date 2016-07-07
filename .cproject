@@ -131,9 +131,10 @@
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.cross.c.linker.566992451" name="Cross GCC Linker" superClass="cdt.managedbuild.tool.gnu.cross.c.linker">
 								<option id="gnu.c.link.option.paths.1356486562" name="Library search path (-L)" superClass="gnu.c.link.option.paths" valueType="libPaths">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/lib/lib-mosquitto}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/lib/jansson}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/lib/uuid/lib}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/lib/lib-fluent-logger}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/lib/lib-mosquitto}&quot;"/>
 								</option>
 								<option id="gnu.c.link.option.libs.402390409" name="Libraries (-l)" superClass="gnu.c.link.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="pthread"/>
@@ -141,6 +142,7 @@
 									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="uuid"/>
 									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="mosquitto"/>
 									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="jansson"/>
+									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="fluentlogger"/>
 								</option>
 								<option id="gnu.c.link.option.ldflags.340641263" name="Linker flags" superClass="gnu.c.link.option.ldflags" value="-Wl,-rpath=${workspace_loc:/${ProjName}/src/lib/lib-ssl}" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.c.linker.input.1252712311" superClass="cdt.managedbuild.tool.gnu.c.linker.input">
