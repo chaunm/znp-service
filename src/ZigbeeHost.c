@@ -39,7 +39,6 @@ int main(int argc, char* argv[])
 	pthread_t SerialProcessThread;
 	pthread_t SerialOutputThread;
 	pthread_t SerialHandleThread;
-	pthread_t fluentLoggerStartThread;
 	//pthread_t DemoActorThread;
 	PSERIAL	pSerialPort;
 	BOOL bResult = FALSE;
@@ -121,7 +120,7 @@ int main(int argc, char* argv[])
 	// Init device organization list
 	DeviceListInit();
 	/* Start Logger */
-	pthread_create(&fluentLoggerStartThread, NULL, (void*)&FluentLoggerInit, (void*)&loggerOpt);
+	FluentLoggerInit(&loggerOpt);
 	/* Start Znp actor */
 	FLUENT_LOGGER_INFO("znp actor start");
 	ZnpActorStart(&option);

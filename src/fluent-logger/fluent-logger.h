@@ -15,12 +15,18 @@ typedef struct tagLOGGER {
 	fluent_context_t *context;
 	char* sender;
 	char* host;
+	BOOL sending;
 } LOGGER, *PLOGGER;
 
 typedef struct tagLOGGEROPTION {
 	char* sender;
 	char* host;
 } LOGGEROPTION, *PLOGGEROPTION;
+
+typedef struct tagLOGGERMSG {
+	char* level;
+	char* message;
+} LOGGERMSG, *PLOGGERMSG;
 
 void FluentLoggerInit(PLOGGEROPTION loggerOpt);
 void FluentLoggerPost(char* level, char* message);
