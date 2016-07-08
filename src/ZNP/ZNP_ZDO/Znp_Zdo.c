@@ -79,7 +79,7 @@ VOID ZnpZdoProcessEdIeeeBroadcast(PZNPPACKAGE pBuffer, BYTE nLength)
 	LogWrite(LogString);
 	FLUENT_LOGGER_INFO(LogString);
 	free(LogString);
-	DeviceSetTimeoutTime(pIeeeInfo->nNwkAddr, DEFAULT_MESSAGE_TIMEOUT);
+	DeviceSetTimeoutTime(pIeeeInfo->nNwkAddr, DEFAULT_DEVICE_TIMEOUT);
 }
 
 /* Function: ZnpZdoProcessEdLeaveRsp(PZNPPACKAGE pBuffer, BYTE nLength)
