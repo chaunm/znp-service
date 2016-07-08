@@ -44,6 +44,12 @@ typedef struct tagZDOANNCEINFO {
 	BYTE nCapabilities;
 } ZDOANNCEINFO, *PZDOANNCEINFO;
 
+typedef struct tagZDOIEEEBRD {
+	WORD nNwkAddr;
+	IEEEADDRESS IeeeAddr;
+	WORD footer;
+} ZDOIEEEBRD, *PZDOIEEEBRD;
+
 #pragma pack(1)
 typedef struct tagZDOATVEPRQT {
 	WORD nDstAddr;

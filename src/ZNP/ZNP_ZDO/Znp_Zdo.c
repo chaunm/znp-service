@@ -73,11 +73,13 @@ VOID ZnpZdoProcessEdAnnceRsp(PZNPPACKAGE pBuffer, BYTE nLength)
 
 VOID ZnpZdoProcessEdIeeeBroadcast(PZNPPACKAGE pBuffer, BYTE nLength)
 {
+	PZDOIEEEBRD pIeeeInfo = (PZDOIEEEBRD)(_ZNPCONTENT(pBuffer));
 	char* LogString = malloc(250);
-	sprintf(LogString, "Ieee Address broadcast, data size %d", nLength - 4);
+	sprintf(LogString, "Ieee Address broadcast, network address 0x%02X", pIeeeInfo->nNwkAddr);
 	LogWrite(LogString);
 	FLUENT_LOGGER_INFO(LogString);
 	free(LogString);
+	DeviceSetTimeoutTime(pIeeeInfo->nNwkAddr, DEFAULT_MESSAGE_TIMEOUT);
 }
 
 /* Function: ZnpZdoProcessEdLeaveRsp(PZNPPACKAGE pBuffer, BYTE nLength)
