@@ -116,6 +116,7 @@ int main(int argc, char* argv[])
 	option.psw = token;
 	option.host = mqttHost;
 	option.port = mqttPort;
+
 	LogWrite("Zigbee host start. start init ZNP");
 	// Init device organization list
 	DeviceListInit();

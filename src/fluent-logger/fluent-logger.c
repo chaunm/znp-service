@@ -63,12 +63,13 @@ static void FluentLoggerSend(PLOGGERMSG message)
 
 void FluentLoggerPost(char* level, char* message)
 {
-	pthread_t sendThread;
+	//pthread_t sendThread;
 	// try to connect to fluentd
 	PLOGGERMSG loggerMsg = malloc(sizeof(LOGGERMSG));
 	loggerMsg->level = level;
 	loggerMsg->message = message;
-	pthread_create(&sendThread, NULL,(void*)&FluentLoggerSend, (void*)loggerMsg);
-	pthread_detach(sendThread);
+	FluentLoggerSend(loggerMsg);
+	//pthread_create(&sendThread, NULL,(void*)&FluentLoggerSend, (void*)loggerMsg);
+	//pthread_detach(sendThread);
 }
 

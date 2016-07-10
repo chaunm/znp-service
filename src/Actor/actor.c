@@ -230,7 +230,7 @@ int ActorConnect(PACTOR pActor, char* guid, char* psw, char* inHost, WORD inPort
     if (client == NULL) return -1;
 
     //connect to broker
-    printf("%s connected to %s at port %d\n", pActor->guid, HOST, PORT);
+    printf("%s connected to %s at port %d\n", pActor->guid, host, port);
     printf("id: %s, password: %s\n", guid, psw);
     pActor->connected = 0;
     rc = mosquitto_connect(client, host, port, 60);
@@ -290,7 +290,13 @@ void ActorSend(PACTOR pActor, char* topicName, char* message, ACTORCALLBACKFN ca
 		sendBuffer = json_dumps(jsonMessage, JSON_INDENT(4) | JSON_REAL_PRECISION(4));
 	}
 	else
+	{
 		sendBuffer = StrDup(message);
+		if (jsonId != NULL)
+			json_decref(jsonId);
+		if (jsonHeader != NULL)
+			json_decref(jsonHeader);
+	}
 	mosquitto_publish(pActor->client, &pActor->DeliveredToken, topicName, strlen(sendBuffer),
 			(void*)sendBuffer, QOS, 0);
 
@@ -299,7 +305,9 @@ void ActorSend(PACTOR pActor, char* topicName, char* message, ACTORCALLBACKFN ca
 		jsonHeader = json_object_get(jsonMessage, "header");
 		if (jsonHeader != NULL)
 		{
-			ActorRegisterCallback(pActor, json_string_value(json_object_get(jsonHeader, "id")), callback, CALLBACK_ONCE);
+			jsonId = json_object_get(jsonHeader, "id");
+			ActorRegisterCallback(pActor, json_string_value(jsonId), callback, CALLBACK_ONCE);
+			json_decref(jsonId);
 			json_decref(jsonHeader);
 		}
 	}

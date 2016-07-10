@@ -116,7 +116,9 @@ VOID DevDesUpdateFromDeviceInfo (PDEVICEINFO pFirstDev)
 	{
 		for (nEpIndex = 0; nEpIndex < pDeviceInfo->nNumberActiveEndpoint; nEpIndex++)
 		{
-			pDeviceDesc = (PDEVICEDESC)malloc(sizeof(DEVICEDESC));
+			pDeviceDesc = (PDEVICEDESC)calloc(1, sizeof(DEVICEDESC));
+			//pDeviceDesc = (PDEVICEDESC)malloc(sizeof(DEVICEDESC));
+			//memset(pDeviceDesc, 0, sizeof(DEVICEDESC))
 			pDeviceDesc->nId = nId;
 			nId++;
 			pDeviceDesc->nNwkAddr = pDeviceInfo->nNetworkAddress;

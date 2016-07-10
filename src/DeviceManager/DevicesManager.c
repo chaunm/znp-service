@@ -299,18 +299,19 @@ VOID DeviceAdd(PZDOANNCEINFO pDeviceInfo)
 	PWORD pNwkAddr = (PWORD)malloc(sizeof(WORD));
 	*pNwkAddr = pDeviceInfo->nNwkAddr;
 	pthread_t NewDvConfigThr;
-	char* LogString = (char*)malloc(100);
+	char* LogString = (char*)calloc(100, sizeof(BYTE));
 	PWORD pIeee = (PWORD)&(pDeviceInfo->IeeeAddr);
 	if (DeviceFind(pDeviceInfo->nNwkAddr) != NULL)
 	{
 		printf("Device already in list \n");
 		// ra soat lai viec tao thread trong truong hop ho tro thiet bi Xiaomi
-		//pthread_create(&NewDvConfigThr, NULL, (void*)&DeviceGetInfoAndConfig, (void*)(pNwkAddr));
+		pthread_create(&NewDvConfigThr, NULL, (void*)&DeviceGetInfoAndConfig, (void*)(pNwkAddr));
+		pthread_detach(NewDvConfigThr);
 		DeviceListAssoDevice();
 		return;
 	}
 	printf("Add new device address 0x%04X\n", pDeviceInfo->nNwkAddr);
-	pNewDevice = (PDEVICEINFO)malloc(sizeof(DEVICEINFO));
+	pNewDevice = (PDEVICEINFO)calloc(1, sizeof(DEVICEINFO));
 	pNewDevice->IeeeAddr = pDeviceInfo->IeeeAddr;
 	pNewDevice->nNetworkAddress = pDeviceInfo->nNwkAddr;
 	pNewDevice->nDeviceTimeOut = DEFAULT_DEVICE_TIMEOUT;
@@ -979,7 +980,8 @@ VOID DeviceAddEndpoint(PENDPOINTADDR pEpAddr)
 	if (pEp != NULL) return;
 	nEpIndex = pDevice->nNumberActiveEndpoint;
 	// adding end point to device info struct
-	pNewEpList = (PENDPOINTINFO)malloc(sizeof(ENDPOINTINFO) * (nEpIndex + 1));
+	//pNewEpList = (PENDPOINTINFO)malloc(sizeof(ENDPOINTINFO) * (nEpIndex + 1));
+	pNewEpList = (PENDPOINTINFO)calloc(nEpIndex + 1, sizeof(ENDPOINTINFO));
 	// Copy old data to new endpoint info list
 	CopyMemory((PBYTE)pNewEpList, (PBYTE)pDevice->pEndpointInfoList, sizeof(ENDPOINTINFO) * nEpIndex);
 	pNewEpList[nEpIndex].nEndPoint = pEpAddr->nEp;
@@ -1074,8 +1076,8 @@ VOID DeviceAddCluster(PCLUSTERADDR pClusterAddr)
 	if (pEp != DeviceFindEpInfo(pClusterAddr->nNwkAddr, pClusterAddr->nEp) || (pEp == NULL)) return;
 	nClusterIndex = pEp->nInCluster + pEp->nOutCluster;
 	pEp->nOutCluster++;
-	pNewClusterInfoList = (PCLUSTERINFO)malloc(sizeof(CLUSTERINFO) * (nClusterIndex + 1));
-
+	//pNewClusterInfoList = (PCLUSTERINFO)malloc(sizeof(CLUSTERINFO) * (nClusterIndex + 1));
+	pNewClusterInfoList = (PCLUSTERINFO)calloc(nClusterIndex + 1, sizeof(CLUSTERINFO));
 	if (pEp != DeviceFindEpInfo(pClusterAddr->nNwkAddr, pClusterAddr->nEp))
 	{
 		free(pNewClusterInfoList);
