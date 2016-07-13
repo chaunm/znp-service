@@ -28,6 +28,8 @@ typedef void* CallbackParam;
 typedef struct tagACTOROPTION {
 	char* guid;
 	char* psw;
+	char* host;
+	WORD port;
 } ACTOROPTION, *PACTOROPTION;
 
 typedef struct tagACTOREVENT {
@@ -51,7 +53,10 @@ typedef struct tagACTOR {
 	char connected;
 	char* guid;
 	char* psw;
+	char* host;
+	WORD port;
 }ACTOR, *PACTOR;
+
 
 /* make an unique guid for actor by combine a prefix with a generated uuid
  * the result guid has the from of prefix-generated-uuid
@@ -93,7 +98,7 @@ void ActorProcessEvent(PACTOR pActor);
  * result will be an valid actor if valid connection is created
  * result NULL if cannot create an actor or cannot connect to internal host
  */
-PACTOR ActorCreate(char* guid, char* psw);
+PACTOR ActorCreate(char* guid, char* psw, char* host, WORD port);
 /* Delete an actor */
 void ActorDelete(PACTOR pActor);
 /* Actor publish a message to topicName and trigger a callback for response handling */

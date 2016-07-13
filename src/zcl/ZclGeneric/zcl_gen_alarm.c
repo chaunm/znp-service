@@ -10,7 +10,7 @@
 #include "log.h"
 #include "ZNP_AF/ZnpAf.h"
 #include "ZnpActor.h"
-
+#include "../fluent-logger/fluent-logger.h"
 VOID ZclGenAlarmAttrInit(PZCLGENALARMATTR pData)
 {
 	pData->wAlarmCount = 0;
@@ -54,7 +54,9 @@ VOID ZclGenAlarmUpdateReadAttr(WORD nNwkAddr, BYTE nEp, PBYTE pData, BYTE nLen)
 		if (pReadAttr->nState != 0)
 		{
 			nLen -= sizeof(pReadAttr->nAttrID) + sizeof(pReadAttr->nState);
+			FLUENT_LOGGER_DEBUG("zcl general alarm attribute is not valid");
 			printf("Attribute 0x%04X not valid\n", pReadAttr->nAttrID);
+
 		}
 		else
 		{
@@ -62,7 +64,7 @@ VOID ZclGenAlarmUpdateReadAttr(WORD nNwkAddr, BYTE nEp, PBYTE pData, BYTE nLen)
 			{
 			case ZCL_GEN_PWR_CFG_MAIN_VOLT_ATTR:
 				pClusterAttr->wAlarmCount = (WORD)(*pReadAttr->pData);
-				printf("Alarm count %d\n", pClusterAttr->wAlarmCount);
+				//printf("Alarm count %d\n", pClusterAttr->wAlarmCount);
 				nLen -= sizeof(ZCLATTRREADSTRUCT) + sizeof(WORD);
 				pData += sizeof(ZCLATTRREADSTRUCT) + sizeof(WORD);
 				pReadAttr = (PZCLATTRREADSTRUCT)pData;
@@ -101,23 +103,36 @@ VOID ZclAlarmParseAlarmCommand(WORD nNwkAddr, BYTE nEndpoint, PZCLGENALARMALRMCM
 	if (pDevice == NULL) return;
 	PZNPACTORDATA znpData;
 	char value = 0;
+	char* loggerMessage;
 	switch (pAlarmInfo->nClusterID)
 	{
 	case ZCL_CLUSTER_ID_GEN_POWER_CFG:
 		switch(pAlarmInfo->nAlarmCode)
 		{
 		case 0x10:
-			printf("battery low alarm\n");
+			loggerMessage = malloc(300);
+			sprintf(loggerMessage, "battery low: Device 0x%04X endpoint %d", nNwkAddr, nEndpoint);
+			FLUENT_LOGGER_WARN(loggerMessage);
+			free(loggerMessage);
+			//printf("battery low alarm\n");
 			value = 1;
 			znpData = ZnpActorMakeData("battery", ZNP_DATA_TYPE_INTERGER, (void*)&value, sizeof(value));
 			ZnpActorPublishDeviceDataEvent(pDevice->IeeeAddr, nEndpoint, 1, &znpData);
 			ZnpActorDestroyZnpData(znpData);
 			break;
 		case 0x00:
-			printf("Main power low alarm\n");
+			loggerMessage = malloc(300);
+			sprintf(loggerMessage, "main power low: Device 0x%04X endpoint %d", nNwkAddr, nEndpoint);
+			FLUENT_LOGGER_WARN(loggerMessage);
+			free(loggerMessage);
+			//printf("Main power low alarm\n");
 			break;
 		case 0x01:
-			printf("Main power high alarm\n");
+			loggerMessage = malloc(300);
+			sprintf(loggerMessage, "main power high: Device 0x%04X endpoint %d", nNwkAddr, nEndpoint);
+			FLUENT_LOGGER_WARN(loggerMessage);
+			free(loggerMessage);
+			//printf("Main power high alarm\n");
 			break;
 		default:
 			break;

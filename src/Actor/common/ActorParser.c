@@ -81,6 +81,7 @@ char* ActorCreateUuidString()
 {
 	uuid_t uuid;
 	char* uuidString = (char*)malloc(50);
+	memset(uuidString, 0, 50);
 	uuid_generate(uuid);
 	sprintf(uuidString, "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",	uuid[0], uuid[1],uuid[2],uuid[3],
 			uuid[4],uuid[5],uuid[6],uuid[7],uuid[8],uuid[9],uuid[10],uuid[11],uuid[12],uuid[13],uuid[14],uuid[15]);
@@ -138,7 +139,7 @@ char** ActorSplitMessage(char* message)
 	// assume that all the message always content 2 json packages
 	if (messageCount != 2)
 		return NULL;
-	result = (char**)malloc(sizeof(char*) * messageCount + 1); // +1 to dedicate that the end of list is 0
+	result = (char**)malloc(sizeof(char*) * (messageCount + 1)); // +1 to dedicate that the end of list is 0
 	*(result + messageCount) = NULL;
 	//copy JsonMessage to list
 	limCount = 0;

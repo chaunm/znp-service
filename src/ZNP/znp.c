@@ -12,7 +12,7 @@
 #include "universal.h"
 #include "log.h"
 #include "znp.h"
-
+#include "../fluent-logger/fluent-logger.h"
 #include "ZNP_AF/ZnpAf.h"
 #include "ZNP_SimpleAPI/Znp_SimpleApi.h"
 #include "ZNP_System/Znp_System.h"
@@ -209,8 +209,7 @@ BOOL ZnpInit(PSERIAL pSerialPort, WORD nStatusUpdateTime)
 	// Get device info
 	ZnpUtilGetDeviceInfo();
 	//Permit join request
-	ZnpZbPermitJoiningReq(0xFFFC, 30);
-	LogWrite("ZNP initialize success");
+	ZnpZbPermitJoiningReq(0xFFFC, 255);
 	return TRUE;
 }
 
@@ -237,7 +236,6 @@ VOID ZnpHandleCommand(PBYTE pBuffer, BYTE nLength)
 		ZnpUtilProcessIncomingCommand(pZnpData, nLength);
 		break;
 	default:
-		printf("Valid znp package has been processed \n");
 		break;
 	}
 	if ((stZnpDevice.nZnpState != ZNP_STATE_ACTIVE) &&
@@ -256,6 +254,7 @@ VOID ZnpStateProcess()
 			if (stZnpDevice.nZnpTimeout == 0)
 			{
 				ZnpActorPublishZnpStatus("status.offline.znp_comm_fail");
+				FLUENT_LOGGER_INFO("Publish status offline");
 			}
 		}
 	}
@@ -266,6 +265,7 @@ VOID ZnpStateProcess()
 		{
 			nTimeCount = 0;
 			ZnpActorPublishZnpStatus("status.online");
+			FLUENT_LOGGER_INFO("Publish status online");
 		}
 	}
 }

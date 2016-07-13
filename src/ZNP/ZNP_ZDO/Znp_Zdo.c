@@ -12,7 +12,7 @@
 #include "log.h"
 #include "string.h"
 #include "ZnpActor.h"
-
+#include "../fluent-logger/fluent-logger.h"
 /* Function: ZnpZdoProcessZdoStateChangeInd(PZNPPACKAGE pBuffer, BYTE nLength)
  * Description:
  * 	- Process the ZDO_STATE_CHANGE_IND command from ZNP
@@ -69,6 +69,17 @@ VOID ZnpZdoProcessEdAnnceRsp(PZNPPACKAGE pBuffer, BYTE nLength)
 	free(pLogString);
 	// Start device get info process
 	DeviceAdd(pAnnceInfo);
+}
+
+VOID ZnpZdoProcessEdIeeeBroadcast(PZNPPACKAGE pBuffer, BYTE nLength)
+{
+	PZDOIEEEBRD pIeeeInfo = (PZDOIEEEBRD)(_ZNPCONTENT(pBuffer));
+	char* LogString = malloc(250);
+	sprintf(LogString, "Ieee Address broadcast, network address 0x%02X", pIeeeInfo->nNwkAddr);
+	LogWrite(LogString);
+	FLUENT_LOGGER_INFO(LogString);
+	free(LogString);
+	DeviceSetTimeoutTime(pIeeeInfo->nNwkAddr, DEFAULT_DEVICE_TIMEOUT);
 }
 
 /* Function: ZnpZdoProcessEdLeaveRsp(PZNPPACKAGE pBuffer, BYTE nLength)
@@ -294,6 +305,7 @@ VOID ZnpZdoProcessIeeeRsp(PZNPPACKAGE pBuffer, BYTE nLength)
 	DeviceUpdateIeeeAddr(pIeeeRsp->nNetworkAddr, pIeeeRsp->IeeeAddr);
 	DeviceSetInformed(pIeeeRsp->nNetworkAddr, pBuffer->nCommand, 0xFF);
 }
+
 /* Function: ZnpZdoProcessIncomingCommand(PZNPPACKAGE pBuffer, BYTE nLength)
  * Description:
  * 	- Process the Zdo command from ZNP
@@ -311,6 +323,9 @@ VOID ZnpZdoProcessIncomingCommand(PZNPPACKAGE pBuffer, BYTE nLength)
 		break;
 	case ZDO_MGMT_PERMIT_JOIN_RSP:
 		ZnpZdoProcessPermitJoinRsp(pBuffer, nLength);
+		break;
+	case ZDO_END_DEVICE_IEEE_IND:
+		ZnpZdoProcessEdIeeeBroadcast(pBuffer, nLength);
 		break;
 	case ZDO_END_DEVICE_ANNCE_IND:
 		ZnpZdoProcessEdAnnceRsp(pBuffer, nLength);
@@ -332,6 +347,7 @@ VOID ZnpZdoProcessIncomingCommand(PZNPPACKAGE pBuffer, BYTE nLength)
 		break;
 	case ZDO_PERMIT_JOIN_SESSION_END:
 		printf("Permit join session ended\n");
+		FLUENT_LOGGER_INFO("Permit joint session end");
 		break;
 	default:
 		break;

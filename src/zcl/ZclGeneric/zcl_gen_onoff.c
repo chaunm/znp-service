@@ -10,6 +10,7 @@
 #include "ZNP_AF/ZnpAf.h"
 #include "log.h"
 #include "ZnpActor.h"
+#include "../fluent-logger/fluent-logger.h"
 /********************************/
 /* ZCL GEN ON OFF PROCESS 		*/
 /********************************/
@@ -109,29 +110,21 @@ VOID ZclGenOnOffParseWriteAttrRsp(WORD nNwkAddr, BYTE nEp, PBYTE pData, BYTE nLe
 	}
 	while (nLength > 0)
 	{
-		switch (pWriteRsp->nAttrId)
+		printf( "Write attribute 0x%04x, device 0x%04X, endpoint %d", pWriteRsp->nAttrId, nNwkAddr, nEp);
+		if (pWriteRsp->nStatus == 0)
 		{
-		printf("Write attribute 0x%04X ", pWriteRsp->nAttrId);
-		case ZCL_IAS_ZONE_SETTING_ATTR:
-			if (pWriteRsp->nStatus == 0)
-			{
+			if (pWriteRsp->nAttrId == ZCL_IAS_ZONE_SETTING_ATTR)
 				pAttrData->nOnOff = pAttrData->nWriteOnOff;
-				printf("success\n");
-			}
-			else
-			{
+			printf("success\n");
+		}
+		else
+		{
+			if (pWriteRsp->nAttrId == ZCL_IAS_ZONE_SETTING_ATTR)
 				pAttrData->nWriteOnOff = pAttrData->nOnOff;
-				printf("fail\n");
-			}
-			break;
-		default:
-			if (pWriteRsp->nStatus == 0)
-				printf("success\n");
-			else
-				printf("fail\n");
-			break;
+			printf("fail\n");
 		}
 		nLength -= sizeof(ZCLATTRWRITERSPSTRUCT);
+		pWriteRsp++;
 	}
 }
 
@@ -160,9 +153,10 @@ VOID ZclGenOnOffParseAttrReport(WORD nNwkAddr, BYTE nEp, PBYTE pData, BYTE nLen)
 			sprintf(pLogString, "Attribute Report - Address: 0x%04X, Endpoint: 0x%02X, Cluster ID: 0x%04X, Attr ID: 0x%04X, Value: 0x%02X",
 					nNwkAddr, nEp, ZCL_CLUSTER_ID_GEN_ON_OFF, ZCL_GEN_ONOFF_ONOFF_ATTR, pClusterAttr->nOnOff);
 			LogWrite(pLogString);
+			FLUENT_LOGGER_INFO(pLogString);
 			//MqttClientPublishMessage(pLogString);
-			printf("Attribute Report - Address: 0x%04X, Endpoint: 0x%02X, Cluster ID: 0x%04X, Attr ID: 0x%04X, Value: 0x%02X\n",
-							nNwkAddr, nEp, ZCL_CLUSTER_ID_GEN_ON_OFF, ZCL_GEN_ONOFF_ONOFF_ATTR, pClusterAttr->nOnOff);
+			//printf("Attribute Report - Address: 0x%04X, Endpoint: 0x%02X, Cluster ID: 0x%04X, Attr ID: 0x%04X, Value: 0x%02X\n",
+							//nNwkAddr, nEp, ZCL_CLUSTER_ID_GEN_ON_OFF, ZCL_GEN_ONOFF_ONOFF_ATTR, pClusterAttr->nOnOff);
 			int znpValue = pClusterAttr->nOnOff;
 			znpData = ZnpActorMakeData("occupancy", ZNP_DATA_TYPE_INTERGER, &znpValue, sizeof(int));
 			ZnpActorPublishDeviceDataEvent(DeviceFind(nNwkAddr)->IeeeAddr, nEp, 1, &znpData);

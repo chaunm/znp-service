@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "fluentlogger.h"
 #include "DevicesManager.h"
 #include "DeviceDesc.h"
 #include "ZigbeeHaDeviceDesc.h"
@@ -16,7 +17,7 @@
 #include "ZNP_AF/ZnpAf.h"
 #include "log.h"
 #include "ZnpActor.h"
-
+#include "../fluent-logger/fluent-logger.h"
 #ifdef PI_RUNNING
 static char FileName[] = "/home/pi/ZigbeeHost/data/devices.dat";
 #endif
@@ -259,7 +260,10 @@ BYTE DeviceWaitInformed(WORD nNwkAddr, WORD nCommand, BYTE nTransID)
 		if (nTimeout == 0)
 		{
 			LogString = (char*)malloc(500);
-			sprintf(LogString, "No response from device 0x%04X", pDevice->nNetworkAddress);
+			sprintf(LogString, "No response from device 0x%04X for transID %d", pDevice->nNetworkAddress, nTransID);
+			LogWrite(LogString);
+			FLUENT_LOGGER_INFO(LogString);
+			free(LogString);
 			return 1;
 		}
 	}
@@ -295,18 +299,19 @@ VOID DeviceAdd(PZDOANNCEINFO pDeviceInfo)
 	PWORD pNwkAddr = (PWORD)malloc(sizeof(WORD));
 	*pNwkAddr = pDeviceInfo->nNwkAddr;
 	pthread_t NewDvConfigThr;
-	char* LogString = (char*)malloc(100);
+	char* LogString = (char*)calloc(100, sizeof(BYTE));
 	PWORD pIeee = (PWORD)&(pDeviceInfo->IeeeAddr);
 	if (DeviceFind(pDeviceInfo->nNwkAddr) != NULL)
 	{
 		printf("Device already in list \n");
 		// ra soat lai viec tao thread trong truong hop ho tro thiet bi Xiaomi
-		//pthread_create(&NewDvConfigThr, NULL, (void*)&DeviceGetInfoAndConfig, (void*)(pNwkAddr));
+		pthread_create(&NewDvConfigThr, NULL, (void*)&DeviceGetInfoAndConfig, (void*)(pNwkAddr));
+		pthread_detach(NewDvConfigThr);
 		DeviceListAssoDevice();
 		return;
 	}
 	printf("Add new device address 0x%04X\n", pDeviceInfo->nNwkAddr);
-	pNewDevice = (PDEVICEINFO)malloc(sizeof(DEVICEINFO));
+	pNewDevice = (PDEVICEINFO)calloc(1, sizeof(DEVICEINFO));
 	pNewDevice->IeeeAddr = pDeviceInfo->IeeeAddr;
 	pNewDevice->nNetworkAddress = pDeviceInfo->nNwkAddr;
 	pNewDevice->nDeviceTimeOut = DEFAULT_DEVICE_TIMEOUT;
@@ -322,7 +327,7 @@ VOID DeviceAdd(PZDOANNCEINFO pDeviceInfo)
 		sprintf(LogString, "Device online 0x%04X, IEEE Address: 0x%04X%04X%04X%04X",
 				pDeviceInfo->nNwkAddr, pIeee[3], pIeee[2], pIeee[1], pIeee[0]);
 		LogWrite(LogString);
-		//MqttClientPublishMessage(LogString);
+		FLUENT_LOGGER_INFO(LogString);
 		DeviceListAssoDevice();
 		free(LogString);
 		return;
@@ -339,8 +344,8 @@ VOID DeviceAdd(PZDOANNCEINFO pDeviceInfo)
 	pthread_detach(NewDvConfigThr);
 	sprintf(LogString, "Device online 0x%04X, IEEE Address: 0x%04X%04X%04X%04X",
 			pDeviceInfo->nNwkAddr, pIeee[3], pIeee[2], pIeee[1], pIeee[0]);
+	FLUENT_LOGGER_INFO(LogString);
 	LogWrite(LogString);
-	//MqttClientPublishMessage(LogString);
 	free(LogString);
 	DeviceListAssoDevice();
 }
@@ -358,9 +363,9 @@ VOID DeviceRemove(WORD nNwkAddr)
 	BYTE nEpIndex;
 	BYTE nClusterIndex;
 	char* LogString = (char*)malloc(100);
-
-	sprintf(LogString, "Device off line 0x%04X", nNwkAddr);
+	sprintf(LogString, "Device 0x%04X removed", nNwkAddr);
 	LogWrite(LogString);
+	FLUENT_LOGGER_INFO(LogString);
 	//MqttClientPublishMessage(LogString);
 	free(LogString);
 	if (pCurrentDevice == NULL) return;
@@ -482,15 +487,23 @@ VOID DeviceUpdateIeeeAddr(WORD nAddress, IEEEADDRESS IeeeAddr)
  */
 VOID DeviceUpdateDeviceInfo(WORD nNwkAddr, BYTE nNumEp, PBYTE pEndpointList)
 {
+	// cho nay nen xay dung co che de check lai xem thong tin cu da ok chua, neu thong tin cu da ok thi khong can remove
+	// bug: 10/07/2016
 	PDEVICEINFO pDevice = DeviceFind(nNwkAddr);
 	PENDPOINTINFO pEpInfo = NULL;
 	BYTE nEpIndex, nClusterIndex;
+	// fix 11/07/2016, only free if there is different in number of endpoint
+	if (pDevice->nNumberActiveEndpoint == nNumEp)
+	{
+		return;
+	}
 	// check if end point information has been in list than free to update new end point information
 	if (pDevice != NULL)
 	{
 		if (pDevice->pEndpointInfoList != NULL)
 		{
 			printf("Remove EP Data\n");
+
 			//free all cluster list info
 			for (nEpIndex = 0; nEpIndex < pDevice->nNumberActiveEndpoint; nEpIndex++)
 			{
@@ -890,6 +903,7 @@ static VOID DeviceGetInfoAndConfig(PWORD pNwkAddr)
 	BYTE nStatus = 0;
 	BYTE nEpIndex, nClusterIndex;
 	PDEVICEINFO pDevInfo = DeviceFind(*pNwkAddr);
+	BOOL addDeviceEvent = FALSE;
 	if (pDevInfo->IeeeAddr == 0)
 	{
 		nStatus = ZnpZdoIeeeAddrReq(*pNwkAddr, 0, 0);
@@ -914,11 +928,22 @@ static VOID DeviceGetInfoAndConfig(PWORD pNwkAddr)
 	printf("Get information of %d endpoint(s)\n", pDevInfo->nNumberActiveEndpoint);
 	for (nEpIndex = 0; nEpIndex < pDevInfo->nNumberActiveEndpoint; nEpIndex++)
 	{
+		addDeviceEvent = FALSE;
 		printf("\e[1;31mGetting information enpoint 0x%02X\n\e[1;32m", pDevInfo->pEndpointInfoList[nEpIndex].nEndPoint);
-		nStatus = ZnpZdoSimpleDescReq(pDevInfo->nNetworkAddress, pDevInfo->pEndpointInfoList[nEpIndex].nEndPoint);
-		nStatus = DeviceWaitInformed(pDevInfo->nNetworkAddress, ZDO_SIMPLE_DESC_RSP, 0xFF);
+		// fix 11/07/2016: only get endpoint info again if needed
+		if (pDevInfo->pEndpointInfoList[nEpIndex].pInClusterList == NULL)
+		{
+			addDeviceEvent = TRUE;
+			nStatus = ZnpZdoSimpleDescReq(pDevInfo->nNetworkAddress, pDevInfo->pEndpointInfoList[nEpIndex].nEndPoint);
+			nStatus = DeviceWaitInformed(pDevInfo->nNetworkAddress, ZDO_SIMPLE_DESC_RSP, 0xFF);
+		}
 		if (nStatus == 1)
 		{
+			char* loggerMessage = malloc(250);
+			sprintf(loggerMessage, "No response from device 0x%04X, endpoint %d", *pNwkAddr, pDevInfo->pEndpointInfoList[nEpIndex].nEndPoint);
+			FLUENT_LOGGER_WARN(loggerMessage);
+			LogWrite(loggerMessage);
+			free(loggerMessage);
 			printf("\e[1;31mNo response, next\n\e[1;33m");
 		}
 		else
@@ -939,8 +964,12 @@ static VOID DeviceGetInfoAndConfig(PWORD pNwkAddr)
 			// viet them mot ham xu ly get device type
 			DeviceConfigDeviceType(*pNwkAddr, pDevInfo->pEndpointInfoList[nEpIndex].nEndPoint);
 			// publish device_added event
-			ZnpActorPublishDeviceAddedEvent(pDevInfo->IeeeAddr, pDevInfo->pEndpointInfoList[nEpIndex].nEndPoint,
-					pDevInfo->pEndpointInfoList[nEpIndex].nDeviceID, pDevInfo->pEndpointInfoList[nEpIndex].nDeviceType);
+			// bug 11/07/2016: trong truong hop thay pi co the phat sinh goi tin add device khong can thiet
+			if (addDeviceEvent == TRUE)
+			{
+				ZnpActorPublishDeviceAddedEvent(pDevInfo->IeeeAddr, pDevInfo->pEndpointInfoList[nEpIndex].nEndPoint,
+						pDevInfo->pEndpointInfoList[nEpIndex].nDeviceID, pDevInfo->pEndpointInfoList[nEpIndex].nDeviceType);
+			}
 			ZnpActorPublishDeviceOnlineEvent(pDevInfo->IeeeAddr);
 		}
 	}
@@ -971,7 +1000,8 @@ VOID DeviceAddEndpoint(PENDPOINTADDR pEpAddr)
 	if (pEp != NULL) return;
 	nEpIndex = pDevice->nNumberActiveEndpoint;
 	// adding end point to device info struct
-	pNewEpList = (PENDPOINTINFO)malloc(sizeof(ENDPOINTINFO) * (nEpIndex + 1));
+	//pNewEpList = (PENDPOINTINFO)malloc(sizeof(ENDPOINTINFO) * (nEpIndex + 1));
+	pNewEpList = (PENDPOINTINFO)calloc(nEpIndex + 1, sizeof(ENDPOINTINFO));
 	// Copy old data to new endpoint info list
 	CopyMemory((PBYTE)pNewEpList, (PBYTE)pDevice->pEndpointInfoList, sizeof(ENDPOINTINFO) * nEpIndex);
 	pNewEpList[nEpIndex].nEndPoint = pEpAddr->nEp;
@@ -1066,8 +1096,8 @@ VOID DeviceAddCluster(PCLUSTERADDR pClusterAddr)
 	if (pEp != DeviceFindEpInfo(pClusterAddr->nNwkAddr, pClusterAddr->nEp) || (pEp == NULL)) return;
 	nClusterIndex = pEp->nInCluster + pEp->nOutCluster;
 	pEp->nOutCluster++;
-	pNewClusterInfoList = (PCLUSTERINFO)malloc(sizeof(CLUSTERINFO) * (nClusterIndex + 1));
-
+	//pNewClusterInfoList = (PCLUSTERINFO)malloc(sizeof(CLUSTERINFO) * (nClusterIndex + 1));
+	pNewClusterInfoList = (PCLUSTERINFO)calloc(nClusterIndex + 1, sizeof(CLUSTERINFO));
 	if (pEp != DeviceFindEpInfo(pClusterAddr->nNwkAddr, pClusterAddr->nEp))
 	{
 		free(pNewClusterInfoList);
@@ -1129,6 +1159,7 @@ VOID DeviceProcessTimeout()
 				LogString = (char*)malloc(500);
 				sprintf(LogString, "Device timeout 0x%04X:", pDevice->nNetworkAddress);
 				ZnpActorPublishDeviceOfflineEvent(pDevice->IeeeAddr);
+				FLUENT_LOGGER_INFO(LogString);
 				LogWrite(LogString);
 				free(LogString);
 			}

@@ -13,7 +13,7 @@
 #include "ZNP_AF/ZnpAf.h"
 #include "ZNP_ZDO/Znp_Zdo.h"
 #include "ZnpActor.h"
-//#include "mqtt_client.h"
+#include "../fluent-logger/fluent-logger.h"
 
 VOID ZclSsReHumidAttrInit(PZCLSSREHUMIDATTR pData)
 {
@@ -141,6 +141,7 @@ VOID ZclSsReHumidParseWriteAttrRsp(WORD nNwkAddr, BYTE nEp, PBYTE pData, BYTE nL
 		else
 			printf("fail\n");
 		nLength -= sizeof(ZCLATTRWRITERSPSTRUCT);
+		pWriteRsp++;
 	}
 }
 
@@ -168,7 +169,7 @@ VOID ZclSsReHumidParseAttrReport(WORD nNwkAddr, BYTE nEp, PBYTE pData, BYTE nLen
 			sprintf(pLogString, "Attribute Report - Address: 0x%04X, Endpoint: 0x%02X, Cluster ID: 0x%04X, Attr ID: 0x%04X, Value: %d",
 					nNwkAddr, nEp, ZCL_CLUSTER_ID_MS_RELATIVE_HUMIDITY, pReportData->nAttrID, pClusterAttr->nMeasuredValue);
 			LogWrite(pLogString);
-			//MqttClientPublishMessage(pLogString);
+			FLUENT_LOGGER_INFO(pLogString);
 			printf("Attribute Report - Address: 0x%04X, Endpoint: 0x%02X, Cluster ID: 0x%04X, Attr ID: 0x%04X, Value: %d\n",
 					nNwkAddr, nEp, ZCL_CLUSTER_ID_MS_RELATIVE_HUMIDITY, pReportData->nAttrID, pClusterAttr->nMeasuredValue);
 			free(pLogString);
@@ -186,7 +187,7 @@ VOID ZclSsReHumidParseAttrReport(WORD nNwkAddr, BYTE nEp, PBYTE pData, BYTE nLen
 			sprintf(pLogString, "Attribute Report - Address: 0x%04X, Endpoint: 0x%02X, Cluster ID: 0x%04X, Attr ID: 0x%04X, Value: %d",
 					nNwkAddr, nEp, ZCL_CLUSTER_ID_MS_RELATIVE_HUMIDITY, pReportData->nAttrID, pClusterAttr->nMeasuredValue);
 			LogWrite(pLogString);
-			//MqttClientPublishMessage(pLogString);
+			FLUENT_LOGGER_INFO(pLogString);
 			printf("Attribute Report - Address: 0x%04X, Endpoint: 0x%02X, Cluster ID: 0x%04X, Attr ID: 0x%04X, Value: %d\n",
 					nNwkAddr, nEp, ZCL_CLUSTER_ID_MS_RELATIVE_HUMIDITY, pReportData->nAttrID, pClusterAttr->nMinValue);
 			free(pLogString);
@@ -200,7 +201,7 @@ VOID ZclSsReHumidParseAttrReport(WORD nNwkAddr, BYTE nEp, PBYTE pData, BYTE nLen
 			sprintf(pLogString, "Attribute Report - Address: 0x%04X, Endpoint: 0x%02X, Cluster ID: 0x%04X, Attr ID: 0x%04X, Value: %d",
 					nNwkAddr, nEp, ZCL_CLUSTER_ID_MS_RELATIVE_HUMIDITY, pReportData->nAttrID, pClusterAttr->nMeasuredValue);
 			LogWrite(pLogString);
-			//MqttClientPublishMessage(pLogString);
+			FLUENT_LOGGER_INFO(pLogString);
 			printf("Attribute Report - Address: 0x%04X, Endpoint: 0x%02X, Cluster ID: 0x%04X, Attr ID: 0x%04X, Value: %d\n",
 					nNwkAddr, nEp, ZCL_CLUSTER_ID_MS_RELATIVE_HUMIDITY, pReportData->nAttrID, pClusterAttr->nMaxValue);
 			free(pLogString);
@@ -214,7 +215,7 @@ VOID ZclSsReHumidParseAttrReport(WORD nNwkAddr, BYTE nEp, PBYTE pData, BYTE nLen
 			sprintf(pLogString, "Attribute Report - Address: 0x%04X, Endpoint: 0x%02X, Cluster ID: 0x%04X, Attr ID: 0x%04X, Value: %d",
 					nNwkAddr, nEp, ZCL_CLUSTER_ID_MS_RELATIVE_HUMIDITY, pReportData->nAttrID, pClusterAttr->nTolerance);
 			LogWrite(pLogString);
-			//MqttClientPublishMessage(pLogString);
+			FLUENT_LOGGER_INFO(pLogString);
 			printf("Attribute Report - Address: 0x%04X, Endpoint: 0x%02X, Cluster ID: 0x%04X, Attr ID: 0x%04X, Value: %d\n",
 					nNwkAddr, nEp, ZCL_CLUSTER_ID_MS_RELATIVE_HUMIDITY, pReportData->nAttrID, pClusterAttr->nTolerance);
 			free(pLogString);

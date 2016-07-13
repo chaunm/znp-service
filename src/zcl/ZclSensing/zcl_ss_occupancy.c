@@ -11,6 +11,7 @@
 #include "ZNP_AF/ZnpAf.h"
 #include "ZNP_ZDO/Znp_Zdo.h"
 #include "ZnpActor.h"
+#include "../fluent-logger/fluent-logger.h"
 VOID ZclSsOccuAttrInit(PZCLSSOCCUPANCYATTR pData)
 {
 	pData->nState = 0;
@@ -57,6 +58,7 @@ VOID ZclSsOccuUpdateReadAttr(WORD nNwkAddr, BYTE nEp, PBYTE pData, BYTE nLen)
 	if (pEpInfo != NULL)
 		pEpInfo->nDeviceType = ZCL_CLUSTER_ID_MS_OCCUPANCY_SENSING;
 	*/
+	char* pLogString = malloc(250);
 	while (nLen > 0)
 	{
 		if (pReadAttr->nState != 0)
@@ -73,6 +75,8 @@ VOID ZclSsOccuUpdateReadAttr(WORD nNwkAddr, BYTE nEp, PBYTE pData, BYTE nLen)
 				pData += sizeof(ZCLATTRREADSTRUCT) + sizeof(BYTE);
 				int znpValue = pClusterAttr->nState;
 				znpData = ZnpActorMakeData("occupancy", ZNP_DATA_TYPE_INTERGER, &znpValue, sizeof(int));
+				sprintf(pLogString, "occuoancy data update from 0x%04x endpoint %d value %d", nNwkAddr, nEp, znpValue);
+				FLUENT_LOGGER_INFO(pLogString);
 				ZnpActorPublishDeviceDataEvent(DeviceFind(nNwkAddr)->IeeeAddr, nEp, 1, &znpData);
 				ZnpActorDestroyZnpData(znpData);
 				pReadAttr = (PZCLATTRREADSTRUCT)pData;
@@ -98,6 +102,7 @@ VOID ZclSsOccuUpdateReadAttr(WORD nNwkAddr, BYTE nEp, PBYTE pData, BYTE nLen)
 			}
 		}
 	}
+	free(pLogString);
 }
 
 VOID ZclSsOccuParseWriteAttrRsp(WORD nNwkAddr, BYTE nEp, PBYTE pData, BYTE nLength)
@@ -122,6 +127,7 @@ VOID ZclSsOccuParseWriteAttrRsp(WORD nNwkAddr, BYTE nEp, PBYTE pData, BYTE nLeng
 		else
 			printf("fail\n");
 		nLength -= sizeof(ZCLATTRWRITERSPSTRUCT);
+		pWriteRsp++;
 	}
 }
 
@@ -149,6 +155,7 @@ VOID ZclSsOccuParseAttrReport(WORD nNwkAddr, BYTE nEp, PBYTE pData, BYTE nLen)
 			sprintf(pLogString, "Attribute Report - Address: 0x%04X, Endpoint: 0x%02X, Cluster ID: 0x%04X, Attr ID: 0x%04X, Value: %d",
 					nNwkAddr, nEp, ZCL_CLUSTER_ID_MS_OCCUPANCY_SENSING, pReportData->nAttrID, pClusterAttr->nState);
 			LogWrite(pLogString);
+			FLUENT_LOGGER_INFO(pLogString);
 			//MqttClientPublishMessage(pLogString);
 			printf("Attribute Report - Address: 0x%04X, Endpoint: 0x%02X, Cluster ID: 0x%04X, Attr ID: 0x%04X, Value: %d\n",
 					nNwkAddr, nEp, ZCL_CLUSTER_ID_MS_OCCUPANCY_SENSING, pReportData->nAttrID, pClusterAttr->nState);

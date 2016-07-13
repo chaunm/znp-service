@@ -12,6 +12,7 @@
 #include "log.h"
 #include "ZNP_AF/ZnpAf.h"
 #include "ZnpActor.h"
+#include "../fluent-logger/fluent-logger.h"
 
 void ZclGenPwrCfgAttrInit(PZCLPWRCFGATTR pData)
 {
@@ -56,7 +57,7 @@ BYTE ZclGenPwrCfgGetAttr(WORD nDstAddr, BYTE nEp)
 	pAttrId[11] = ZCL_GEN_PWR_CFG_BAT_RATE_VOLT_ATTR;
 	pAttrId[12] = ZCL_GEN_PWR_CFG_BAT_ALARM_MASK_ATTR;
 	pAttrId[13] = ZCL_GEN_PWR_CFG_BAT_LOW_VOLT_THRES_ATTR;
-
+	FLUENT_LOGGER_INFO("Read attribute(s) of gen_pwr_config cluster");
 	ZclAddMsgStatus(nDstAddr, nTransID);
 	AfDataReq(nDstAddr, nEp, ZnpGetDefaultEp(), ZCL_CLUSTER_ID_GEN_POWER_CFG, (PBYTE)pPackage, nDataSize, TRUE);
 	free((PBYTE)pPackage);
@@ -202,11 +203,16 @@ VOID ZclGenPwrCfgParseWriteAttrRsp(WORD nNwkAddr, BYTE nEp, PBYTE pData, BYTE nL
 	{
 		printf("Write attribute 0x%04X ", pWriteRsp->nAttrId);
 		if (pWriteRsp->nStatus == 0)
+		{
 			printf("success\n");
+		}
 		else
+		{
 			printf("fail\n");
+		}
 		break;
 		nLength -= sizeof(ZCLATTRWRITERSPSTRUCT);
+		pWriteRsp++;
 	}
 }
 

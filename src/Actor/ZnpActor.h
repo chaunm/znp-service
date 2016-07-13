@@ -8,6 +8,7 @@
 #ifndef ZNPACTOR_H_
 #define ZNPACTOR_H_
 
+#include "actor.h"
 
 #pragma pack(1)
 typedef struct tagZNPDEVICEADDDATA {
@@ -17,11 +18,6 @@ typedef struct tagZNPDEVICEADDDATA {
 	BYTE nProtocol;
 } ZNPDEVICEADDDATA, *PZNPDEVICEADDDATA;
 
-#pragma pack(1)
-typedef struct tagZNPACTOROPTION {
-	char* guid;
-	char* psw;
-}ZNPACTOROPTION, *PZNPACTOROPTION;
 
 #pragma pack(1)
 typedef struct tagZNPACTORDATA {
@@ -40,7 +36,7 @@ typedef struct tagZNPACTORDATA {
 #define ZNP_DATA_TYPE_FLOAT		1
 #define ZNP_DATA_TYPE_STRING	2
 
-void ZnpActorStart(PZNPACTOROPTION option);
+void ZnpActorStart(PACTOROPTION option);
 void ZnpActorPublishEvent(char* event, void* eventParam);
 void ZnpActorPublishDeviceAddedEvent(IEEEADDRESS macId, BYTE endpoint, WORD deviceId, WORD deviceType);
 void ZnpActorPublishDeviceRemovedEvent(IEEEADDRESS macId);
