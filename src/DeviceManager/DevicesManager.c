@@ -487,15 +487,23 @@ VOID DeviceUpdateIeeeAddr(WORD nAddress, IEEEADDRESS IeeeAddr)
  */
 VOID DeviceUpdateDeviceInfo(WORD nNwkAddr, BYTE nNumEp, PBYTE pEndpointList)
 {
+	// cho nay nen xay dung co che de check lai xem thong tin cu da ok chua, neu thong tin cu da ok thi khong can remove
+	// bug: 10/07/2016
 	PDEVICEINFO pDevice = DeviceFind(nNwkAddr);
 	PENDPOINTINFO pEpInfo = NULL;
 	BYTE nEpIndex, nClusterIndex;
+	// fix 11/07/2016, only free if there is different in number of endpoint
+	if (pDevice->nNumberActiveEndpoint == nNumEp)
+	{
+		return;
+	}
 	// check if end point information has been in list than free to update new end point information
 	if (pDevice != NULL)
 	{
 		if (pDevice->pEndpointInfoList != NULL)
 		{
 			printf("Remove EP Data\n");
+
 			//free all cluster list info
 			for (nEpIndex = 0; nEpIndex < pDevice->nNumberActiveEndpoint; nEpIndex++)
 			{
@@ -895,6 +903,7 @@ static VOID DeviceGetInfoAndConfig(PWORD pNwkAddr)
 	BYTE nStatus = 0;
 	BYTE nEpIndex, nClusterIndex;
 	PDEVICEINFO pDevInfo = DeviceFind(*pNwkAddr);
+	BOOL addDeviceEvent = FALSE;
 	if (pDevInfo->IeeeAddr == 0)
 	{
 		nStatus = ZnpZdoIeeeAddrReq(*pNwkAddr, 0, 0);
@@ -919,14 +928,21 @@ static VOID DeviceGetInfoAndConfig(PWORD pNwkAddr)
 	printf("Get information of %d endpoint(s)\n", pDevInfo->nNumberActiveEndpoint);
 	for (nEpIndex = 0; nEpIndex < pDevInfo->nNumberActiveEndpoint; nEpIndex++)
 	{
+		addDeviceEvent = FALSE;
 		printf("\e[1;31mGetting information enpoint 0x%02X\n\e[1;32m", pDevInfo->pEndpointInfoList[nEpIndex].nEndPoint);
-		nStatus = ZnpZdoSimpleDescReq(pDevInfo->nNetworkAddress, pDevInfo->pEndpointInfoList[nEpIndex].nEndPoint);
-		nStatus = DeviceWaitInformed(pDevInfo->nNetworkAddress, ZDO_SIMPLE_DESC_RSP, 0xFF);
+		// fix 11/07/2016: only get endpoint info again if needed
+		if (pDevInfo->pEndpointInfoList[nEpIndex].pInClusterList == NULL)
+		{
+			addDeviceEvent = TRUE;
+			nStatus = ZnpZdoSimpleDescReq(pDevInfo->nNetworkAddress, pDevInfo->pEndpointInfoList[nEpIndex].nEndPoint);
+			nStatus = DeviceWaitInformed(pDevInfo->nNetworkAddress, ZDO_SIMPLE_DESC_RSP, 0xFF);
+		}
 		if (nStatus == 1)
 		{
 			char* loggerMessage = malloc(250);
 			sprintf(loggerMessage, "No response from device 0x%04X, endpoint %d", *pNwkAddr, pDevInfo->pEndpointInfoList[nEpIndex].nEndPoint);
 			FLUENT_LOGGER_WARN(loggerMessage);
+			LogWrite(loggerMessage);
 			free(loggerMessage);
 			printf("\e[1;31mNo response, next\n\e[1;33m");
 		}
@@ -948,8 +964,12 @@ static VOID DeviceGetInfoAndConfig(PWORD pNwkAddr)
 			// viet them mot ham xu ly get device type
 			DeviceConfigDeviceType(*pNwkAddr, pDevInfo->pEndpointInfoList[nEpIndex].nEndPoint);
 			// publish device_added event
-			ZnpActorPublishDeviceAddedEvent(pDevInfo->IeeeAddr, pDevInfo->pEndpointInfoList[nEpIndex].nEndPoint,
-					pDevInfo->pEndpointInfoList[nEpIndex].nDeviceID, pDevInfo->pEndpointInfoList[nEpIndex].nDeviceType);
+			// bug 11/07/2016: trong truong hop thay pi co the phat sinh goi tin add device khong can thiet
+			if (addDeviceEvent == TRUE)
+			{
+				ZnpActorPublishDeviceAddedEvent(pDevInfo->IeeeAddr, pDevInfo->pEndpointInfoList[nEpIndex].nEndPoint,
+						pDevInfo->pEndpointInfoList[nEpIndex].nDeviceID, pDevInfo->pEndpointInfoList[nEpIndex].nDeviceType);
+			}
 			ZnpActorPublishDeviceOnlineEvent(pDevInfo->IeeeAddr);
 		}
 	}

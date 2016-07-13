@@ -158,7 +158,6 @@ PACTOR ActorCreate(char* guid, char* psw, char* host, WORD port)
 	pActor->pActorCallback = NULL;
 	if (pActor->client != NULL)
 	{
-		ActorRegisterCallback(pActor, ":request/stop", ActorOnRequestStop, CALLBACK_RETAIN);
 		return pActor;
 	}
 	else
@@ -200,7 +199,6 @@ int ActorConnect(PACTOR pActor, char* guid, char* psw, char* inHost, WORD inPort
 {
 
     int rc;
-    char* topicName;
     struct mosquitto* client;
     WORD port;
     char* host;
@@ -243,6 +241,8 @@ int ActorConnect(PACTOR pActor, char* guid, char* psw, char* inHost, WORD inPort
         sleep(5);
     }
     free(host);
+/*
+    ActorRegisterCallback(pActor, ":request/stop", ActorOnRequestStop, CALLBACK_RETAIN);
 
     topicName = ActorMakeTopicName(guid, "/:request/#");
     printf("subscribe to topic %s\n", topicName);
@@ -259,6 +259,7 @@ int ActorConnect(PACTOR pActor, char* guid, char* psw, char* inHost, WORD inPort
     printf("subscribe to topic %s\n", topicName);
     mosquitto_subscribe(client, &pActor->DeliveredToken, topicName, QOS);
     free(topicName);
+*/
     return 0;
 }
 
@@ -268,6 +269,7 @@ void ActorSend(PACTOR pActor, char* topicName, char* message, ACTORCALLBACKFN ca
 	json_t* jsonHeader;
 	json_t* jsonId = NULL;
 	char* sendBuffer;
+	if (pActor->connected == FALSE) return;
 	if ((topicName == NULL) || (message == NULL))
 		return;
 	jsonMessage = json_loads(message, JSON_DECODE_ANY, NULL);
@@ -508,6 +510,9 @@ void ActorOnOffline(struct mosquitto* client, void * context, int cause)
 	//retry connect
 	int rc = -1;
 	PACTOR pActor = (PACTOR)context;
+	mosquitto_destroy(pActor->client);
+	pActor->client = NULL;
+	pActor->connected = FALSE;
 	while (rc != 0)
 	{
 		rc = ActorConnect(pActor, pActor->guid, pActor->psw, pActor->host, pActor->port);
@@ -522,9 +527,30 @@ void ActorOnOffline(struct mosquitto* client, void * context, int cause)
 void ActorOnConnect(struct mosquitto* client, void* context, int result)
 {
 	PACTOR pActor = (PACTOR)context;
+	char* topicName;
+	char* guid = pActor->guid;
 	printf("%s actor connected %d\n", pActor->guid, result);
 	if (result == 0)
+	{
 		pActor->connected = 1;
+		ActorRegisterCallback(pActor, ":request/stop", ActorOnRequestStop, CALLBACK_RETAIN);
+
+		topicName = ActorMakeTopicName(guid, "/:request/#");
+		printf("subscribe to topic %s\n", topicName);
+		mosquitto_subscribe(client, &pActor->DeliveredToken, topicName, QOS);
+		free(topicName);
+
+		topicName = ActorMakeTopicName(guid, "/:response");
+		printf("subscribe to topic %s\n", topicName);
+		mosquitto_subscribe(client, &pActor->DeliveredToken, topicName, QOS);
+		free(topicName);
+
+		//listen on its own event topic to test
+		topicName = ActorMakeTopicName(guid, "/:event/#");
+		printf("subscribe to topic %s\n", topicName);
+		mosquitto_subscribe(client, &pActor->DeliveredToken, topicName, QOS);
+		free(topicName);
+	}
 	else
 		pActor->connected = 0;
 }
