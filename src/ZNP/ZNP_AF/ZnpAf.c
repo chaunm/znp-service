@@ -14,6 +14,7 @@
 #include "zcl.h"
 #include "DevicesManager.h"
 #include "ZNP_ZDO/Znp_Zdo.h"
+#include "ZnpActor.h"
 
 
 static BYTE nAfTransId = 0;
@@ -103,6 +104,7 @@ VOID AfProcessIncomingMsg(PZNPPACKAGE pZnpPackage, BYTE nLength)
 	printf("Data Length: %d\n", pIncomingData->nLen);
 	// if device does not exists in list than return;
 	DeviceSetTimeoutTime(pIncomingData->nSrcAddr, DEFAULT_DEVICE_TIMEOUT);
+	ZnpActorPublishDeviceLqi(pIncomingData->nSrcAddr, pIncomingData->nLinkQua);
 	if (DeviceFind(pIncomingData->nSrcAddr) != NULL)
 	{
 		/*

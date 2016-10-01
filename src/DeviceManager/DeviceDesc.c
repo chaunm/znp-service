@@ -11,6 +11,8 @@
 #include "DeviceDesc.h"
 #include "ZigbeeHaDeviceDesc.h"
 #include "universal.h"
+#include "zcl.h"
+#include "jansson.h"
 
 #ifdef PI_RUNNING
 static char DescTxtFile[] = "/home/pi/ZigbeeHost/data/DeviceDesc.txt";
@@ -175,6 +177,70 @@ VOID DevDesUpdateFiles()
 				pIeee[3], pIeee[2], pIeee[1], pIeee[0]);
 		pDevDesc = pDevDesc->NextDevice;
 	}
+}
+
+json_t* DevDesMakeDeviceClassJson(WORD deviceId, WORD deviceType)
+{
+	json_t* deviceClassJson;
+	switch (deviceId)
+	{
+	case DEVICE_ID_OCCUPANCY_SENSOR:
+		deviceClassJson = json_string("class.device.sensor.occupancy");
+		break;
+	case DEVICE_ID_TEMPERATURE_SENSOR:
+		switch(deviceType)
+		{
+		case ZCL_CLUSTER_ID_MS_TEMPERATURE_MEASUREMENT:
+			deviceClassJson = json_string("class.device.sensor.temperature");
+			break;
+		case ZCL_CLUSTER_ID_MS_RELATIVE_HUMIDITY:
+			deviceClassJson = json_string("class.device.sensor.humidity");
+			break;
+		default:
+			deviceClassJson = json_string("class.device.sensor.unknown");
+			break;
+		}
+		break;
+		case DEVICE_ID_IAS_ZONE:
+			switch(deviceType)
+			{
+			case ZCL_IAS_ZONE_MOTION_SENSOR:
+				deviceClassJson = json_string("class.device.sensor.motion");
+				break;
+			case ZCL_IAS_ZONE_CONTACT_SWITCH:
+				deviceClassJson = json_string("class.device.sensor.door");
+				break;
+			case ZCL_IAS_ZONE_FIRE_SENSOR:
+				deviceClassJson = json_string("class.device.sensor.fire");
+				break;
+			case ZCL_IAS_ZONE_WATER_SENSOR:
+				deviceClassJson = json_string("class.device.sensor.water");
+				break;
+			case ZCL_IAS_ZONE_GAS_SENSOR:
+				deviceClassJson = json_string("class.device.sensor.gas");
+				break;
+			case ZCL_IAS_ZONE_VIBRATION_SENSOR:
+				deviceClassJson = json_string("class.device.sensor.vibration");
+				break;
+			case ZCL_IAS_ZONE_RM_CONTROL:
+				deviceClassJson = json_string("class.device.keyfob.remote");
+				break;
+			case ZCL_IAS_ZONE_KEY_FOB:
+				deviceClassJson = json_string("class.device.keyfob.panic");
+				break;
+			default:
+				deviceClassJson = json_string("class.device.security.unknown");
+				break;
+			}
+			break;
+			case DEVICE_ID_IAS_ACE:
+				deviceClassJson = json_string("class.device.keyfob.remote");
+				break;
+			default:
+				deviceClassJson = json_string("class.device.unknown");
+				break;
+	}
+	return deviceClassJson;
 }
 
 /*

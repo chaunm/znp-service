@@ -236,15 +236,15 @@ int ActorConnect(PACTOR pActor, char* guid, char* psw, char* inHost, WORD inPort
     	return -1;
 
     //connect to broker
-    printf("%s connected to %s at port %d\n", pActor->guid, host, port);
-    printf("id: %s, password: %s\n", guid, psw);
+    //printf("%s connected to %s at port %d\n", pActor->guid, host, port);
+    //printf("id: %s, password: %s\n", guid, psw);
     pActor->connected = 0;
     rc = mosquitto_connect(client, host, port, 60);
     if (rc != MOSQ_ERR_SUCCESS)
     {
         mosquitto_destroy(client);
         pActor->client = NULL;
-        printf("%s Failed to connect, return code %d\n", guid, rc);
+        //printf("%s Failed to connect, return code %d\n", guid, rc);
     }
     free(host);
     return rc;

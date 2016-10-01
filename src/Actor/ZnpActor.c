@@ -207,7 +207,7 @@ static void ZnpActorCreat(char* guid, char* psw, char* host, WORD port)
 	ActorRegisterCallback(pZnpActor, ":request/remove_device", ZnpActorOnRequestRemoveDevice, CALLBACK_RETAIN);
 }
 
-void ZnpActorPublishDeviceAddedEvent(IEEEADDRESS macId, BYTE endpoint, WORD deviceId, WORD deviceType)
+void ZnpActorPublishEndpointAddedEvent(IEEEADDRESS macId, BYTE endpoint, WORD deviceId, WORD deviceType)
 {
 	if (pZnpActor == NULL) return;
 	json_t* eventJson = json_object();
@@ -226,6 +226,8 @@ void ZnpActorPublishDeviceAddedEvent(IEEEADDRESS macId, BYTE endpoint, WORD devi
 	json_object_set(paramsJson, "endpoint", endpointJson);
 	json_decref(endpointJson);
 	json_t* deviceClassJson;
+	deviceClassJson = DevDesMakeDeviceClassJson(deviceId, deviceType);
+	/*
 	switch (deviceId)
 	{
 	case DEVICE_ID_OCCUPANCY_SENSOR:
@@ -284,6 +286,7 @@ void ZnpActorPublishDeviceAddedEvent(IEEEADDRESS macId, BYTE endpoint, WORD devi
 		deviceClassJson = json_string("class.device.unknown");
 		break;
 	}
+	*/
 	json_object_set(paramsJson, "class", deviceClassJson);
 	json_decref(deviceClassJson);
 	json_t* protocolJson = json_string("zigbee");
@@ -293,7 +296,59 @@ void ZnpActorPublishDeviceAddedEvent(IEEEADDRESS macId, BYTE endpoint, WORD devi
 	json_decref(paramsJson);
 	eventMessage = json_dumps(eventJson, JSON_INDENT(4) | JSON_REAL_PRECISION(4));
 	json_decref(eventJson);
-	topicName = ActorMakeTopicName(pZnpActor->guid, "/:event/device_added");
+	topicName = ActorMakeTopicName(pZnpActor->guid, "/:event/endpoint_added");
+	ActorSend(pZnpActor, topicName, eventMessage, NULL, FALSE);
+	free(eventMessage);
+	free(topicName);
+}
+
+void ZnpActorPublishDeviceAddedEvent(WORD nAddress)
+{
+	json_t* eventJson = json_object();
+	json_t* paramsJson = json_object();
+	json_t* macIdJson = NULL;
+	json_t* protocolJson = NULL;
+	json_t* endpointsJson = NULL;
+	json_t* epJson = NULL;
+	json_t* epIndexJson = NULL;
+	json_t* deviceClassJson = NULL;
+	char* epString = malloc(20);
+	char* macIDString = NULL;
+	char* eventMessage = NULL;
+	char* topicName = NULL;
+	DEVICEINFO pDevice = DeviceFind(nAddress);
+	BYTE epIndex;
+	if (pDevice == NULL) return;
+	macIDString = IeeeToString(pDevice->IeeeAddr);
+	macIdJson = json_string(macIDString);
+	json_object_set(paramsJson, "macId", macIdJson);
+	json_decref(macIdJson);
+	free(macIDString);
+	protocolJson = json_string("zigbee");
+	json_object_set(paramsJson, "protocol", protocolJson);
+	json_decref(protocolJson);
+	endpointsJson = json_array();
+	for (epIndex = 0; epIndex < pDevice->nNumberActiveEndpoint; epIndex)
+	{
+		epJson = json_object();
+		epString = sprintf("%d", pDevice->pEndpointInfoList[epIndex]->nEndPoint);
+		epIndexJson = json_string(epString);
+		json_object_set(epJson, "endpoint", epIndexJson);
+		json_decref(epIndexJson);
+		deviceClassJson = DevDesMakeDeviceClassJson(pDevice->pEndpointInfoList[epIndex]->nDeviceType);
+		json_objec_set(epJson, "class", deviceClassJson);
+		json_decref(deviceClassJson);
+		json_array_append(endpointsJson, epJson);
+		json_decref(epJson);
+	}
+	json_object_set(paramsJson, "endpoints", endpointsJson);
+	json_decref(endpointsJson);
+	json_object_set(eventJson, "params", paramsJson);
+	json_decref(paramsJson);
+	free(epString);
+	eventMessage = json_dumps(eventJson, JSON_INDENT(4) | JSON_REAL_PRECISION(4));
+	json_decref(eventJson);
+	topicName = ActorMakeTopicName(pZnpActor->guid, "/:event/endpoint_added");
 	ActorSend(pZnpActor, topicName, eventMessage, NULL, FALSE);
 	free(eventMessage);
 	free(topicName);
@@ -389,6 +444,39 @@ void ZnpActorPublishDeviceErrorEvent(IEEEADDRESS macId, WORD error)
 	char* topicName = ActorMakeTopicName(pZnpActor->guid, "/:event/device_error");
 	ActorSend(pZnpActor, topicName, eventMessage, NULL, FALSE);
 	json_decref(errorJson);
+	json_decref(protocolJson);
+	json_decref(macIdJson);
+	json_decref(paramsJson);
+	json_decref(eventJson);
+	free(topicName);
+	free(eventMessage);
+}
+
+void ZnpActorPublishDeviceLqi(WORD nAddress, BYTE nLqi)
+{
+	PDEVICEINFO pDevice;
+	if (pZnpActor == NULL) return;
+	pDevice = DeviceFind(nAddress);
+	if (pDevice == NULL) return;
+	json_t* eventJson = json_object();
+	json_t* paramsJson = json_object();
+	char* macIdString = IeeeToString(pDevice->IeeeAddr);
+	json_t* macIdJson = json_string(macIdString);
+	json_t* lqiJson = NULL;
+	free(macIdString);
+	json_t* protocolJson = json_string("zigbee");
+	if (nLqi > LQI_LIMIT)
+		lqiJson = json_integer(1);
+	else
+		lqiJson = json_integer(0);
+	json_object_set(paramsJson, "macId", macIdJson);
+	json_object_set(paramsJson, "protocol", protocolJson);
+	json_object_set(paramsJson, "signal_strength", lqiJson);
+	json_object_set(eventJson, "params", paramsJson);
+	char* eventMessage = json_dumps(eventJson, JSON_INDENT(4) | JSON_REAL_PRECISION(4));
+	char* topicName = ActorMakeTopicName(pZnpActor->guid, "/:event/device_signal");
+	ActorSend(pZnpActor, topicName, eventMessage, NULL, FALSE);
+	json_decref(lqiJson);
 	json_decref(protocolJson);
 	json_decref(macIdJson);
 	json_decref(paramsJson);
