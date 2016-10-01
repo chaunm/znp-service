@@ -7,6 +7,7 @@
 
 #ifndef DEVICEDESC_H_
 #define DEVICEDESC_H_
+#include <jansson.h>
 
 #pragma pack(1)
 typedef struct tagDEVICEDESC {

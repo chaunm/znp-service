@@ -10,6 +10,7 @@
 #include "actor.h"
 #include "znp.h"
 #include "DevicesManager.h"
+#include "DeviceDesc.h"
 #include "ZnpActor.h"
 #include "universal.h"
 #include "common/ActorParser.h"
@@ -316,7 +317,7 @@ void ZnpActorPublishDeviceAddedEvent(WORD nAddress)
 	char* macIDString = NULL;
 	char* eventMessage = NULL;
 	char* topicName = NULL;
-	DEVICEINFO pDevice = DeviceFind(nAddress);
+	PDEVICEINFO pDevice = DeviceFind(nAddress);
 	BYTE epIndex;
 	if (pDevice == NULL) return;
 	macIDString = IeeeToString(pDevice->IeeeAddr);
@@ -328,15 +329,16 @@ void ZnpActorPublishDeviceAddedEvent(WORD nAddress)
 	json_object_set(paramsJson, "protocol", protocolJson);
 	json_decref(protocolJson);
 	endpointsJson = json_array();
-	for (epIndex = 0; epIndex < pDevice->nNumberActiveEndpoint; epIndex)
+	for (epIndex = 0; epIndex < pDevice->nNumberActiveEndpoint; epIndex++)
 	{
 		epJson = json_object();
-		epString = sprintf("%d", pDevice->pEndpointInfoList[epIndex]->nEndPoint);
+		epString = sprintf(epString, "%d", pDevice->pEndpointInfoList[epIndex].nEndPoint);
 		epIndexJson = json_string(epString);
 		json_object_set(epJson, "endpoint", epIndexJson);
 		json_decref(epIndexJson);
-		deviceClassJson = DevDesMakeDeviceClassJson(pDevice->pEndpointInfoList[epIndex]->nDeviceType);
-		json_objec_set(epJson, "class", deviceClassJson);
+		deviceClassJson = DevDesMakeDeviceClassJson(pDevice->pEndpointInfoList[epIndex].nDeviceType,
+				pDevice->pEndpointInfoList[epIndex].nDeviceType);
+		json_object_set(epJson, "class", deviceClassJson);
 		json_decref(deviceClassJson);
 		json_array_append(endpointsJson, epJson);
 		json_decref(epJson);

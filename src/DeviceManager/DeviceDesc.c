@@ -7,12 +7,13 @@
 
 #include <stddef.h>
 #include <stdio.h>
+#include <jansson.h>
 #include "DevicesManager.h"
 #include "DeviceDesc.h"
 #include "ZigbeeHaDeviceDesc.h"
 #include "universal.h"
 #include "zcl.h"
-#include "jansson.h"
+
 
 #ifdef PI_RUNNING
 static char DescTxtFile[] = "/home/pi/ZigbeeHost/data/DeviceDesc.txt";
