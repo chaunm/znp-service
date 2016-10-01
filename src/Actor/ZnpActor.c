@@ -332,7 +332,7 @@ void ZnpActorPublishDeviceAddedEvent(WORD nAddress)
 	for (epIndex = 0; epIndex < pDevice->nNumberActiveEndpoint; epIndex++)
 	{
 		epJson = json_object();
-		epString = sprintf(epString, "%d", pDevice->pEndpointInfoList[epIndex].nEndPoint);
+		sprintf(epString, "%d", pDevice->pEndpointInfoList[epIndex].nEndPoint);
 		epIndexJson = json_string(epString);
 		json_object_set(epJson, "endpoint", epIndexJson);
 		json_decref(epIndexJson);
