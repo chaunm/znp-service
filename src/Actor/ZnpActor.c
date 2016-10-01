@@ -348,7 +348,7 @@ void ZnpActorPublishDeviceAddedEvent(WORD nAddress)
 	free(epString);
 	eventMessage = json_dumps(eventJson, JSON_INDENT(4) | JSON_REAL_PRECISION(4));
 	json_decref(eventJson);
-	topicName = ActorMakeTopicName(pZnpActor->guid, "/:event/endpoint_added");
+	topicName = ActorMakeTopicName(pZnpActor->guid, "/:event/device_added");
 	ActorSend(pZnpActor, topicName, eventMessage, NULL, FALSE);
 	free(eventMessage);
 	free(topicName);
