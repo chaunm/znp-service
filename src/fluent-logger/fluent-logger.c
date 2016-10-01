@@ -23,13 +23,6 @@ void FluentLoggerInit(PLOGGEROPTION loggerOpt)
 		logger.host = StrDup(loggerOpt->host);
 	else
 		logger.host = StrDup("127.0.0.1");
-/*
-	while (logger.context == NULL)
-	{
-		printf("fluentd sender: %s, host: %s\n", logger.sender, logger.host);
-		logger.context = fluent_connect(logger.host, FLUENT_LOGGER_PORT);
-	}
-*/
 }
 
 static void FluentLoggerSend(PLOGGERMSG message)

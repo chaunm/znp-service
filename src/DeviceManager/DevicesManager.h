@@ -14,6 +14,8 @@
 #define DEFAULT_DEVICE_TIMEOUT 	86400
 #define DEFAULT_MESSAGE_TIMEOUT	30
 
+#define LQI_LIMIT	10
+
 #pragma pack(1)
 typedef struct tagCLUSTERINFO
 {

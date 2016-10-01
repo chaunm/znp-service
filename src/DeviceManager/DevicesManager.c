@@ -965,13 +965,20 @@ static VOID DeviceGetInfoAndConfig(PWORD pNwkAddr)
 			DeviceConfigDeviceType(*pNwkAddr, pDevInfo->pEndpointInfoList[nEpIndex].nEndPoint);
 			// publish device_added event
 			// bug 11/07/2016: trong truong hop thay pi co the phat sinh goi tin add device khong can thiet
+			/*
 			if (addDeviceEvent == TRUE)
 			{
 				ZnpActorPublishDeviceAddedEvent(pDevInfo->IeeeAddr, pDevInfo->pEndpointInfoList[nEpIndex].nEndPoint,
 						pDevInfo->pEndpointInfoList[nEpIndex].nDeviceID, pDevInfo->pEndpointInfoList[nEpIndex].nDeviceType);
 			}
 			ZnpActorPublishDeviceOnlineEvent(pDevInfo->IeeeAddr);
+			*/
 		}
+	}
+	/* 01/10/2016: publish all device info in one message */
+	if (addDeviceEvent == TRUE)
+	{
+		ZnpActorPublishDeviceAddedEvent(pDevInfo->nNetworkAddress);
 	}
 	DeviceListWriteToFile();
 	DeviceListAssoDevice();
@@ -1051,7 +1058,7 @@ VOID DeviceAddEndpoint(PENDPOINTADDR pEpAddr)
 	DeviceConfigDeviceType(pEpAddr->nNwkAddr, pEpAddr->nEp);
 	// publish device_added event
 	pEp = DeviceFindEpInfo(pEpAddr->nNwkAddr, pEpAddr->nEp);
-	ZnpActorPublishDeviceAddedEvent(pDevice->IeeeAddr, pEpAddr->nEp, pEp->nDeviceID, pEp->nDeviceType);
+	ZnpActorPublishEndpointAddedEvent(pDevice->IeeeAddr, pEpAddr->nEp, pEp->nDeviceID, pEp->nDeviceType);
 	ZnpActorPublishDeviceOnlineEvent(pDevice->IeeeAddr);
 	DeviceListWriteToFile();
 	DeviceListAssoDevice();
@@ -1131,7 +1138,7 @@ VOID DeviceAddCluster(PCLUSTERADDR pClusterAddr)
 	DeviceConfigDeviceType(pClusterAddr->nNwkAddr, pClusterAddr->nEp);
 	// publish device_added event
 	PDEVICEINFO pDevice = DeviceFind(pClusterAddr->nNwkAddr);
-	ZnpActorPublishDeviceAddedEvent(pDevice->IeeeAddr, pEp->nEndPoint, pEp->nDeviceID, pEp->nDeviceType);
+	ZnpActorPublishEndpointAddedEvent(pDevice->IeeeAddr, pEp->nEndPoint, pEp->nDeviceID, pEp->nDeviceType);
 	ZnpActorPublishDeviceOnlineEvent(pDevice->IeeeAddr);
 	printf("Add cluster 0x%04X finished\n", pClusterAddr->nClusterID);
 	DeviceListWriteToFile();

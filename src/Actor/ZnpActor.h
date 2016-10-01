@@ -38,11 +38,13 @@ typedef struct tagZNPACTORDATA {
 
 void ZnpActorStart(PACTOROPTION option);
 void ZnpActorPublishEvent(char* event, void* eventParam);
-void ZnpActorPublishDeviceAddedEvent(IEEEADDRESS macId, BYTE endpoint, WORD deviceId, WORD deviceType);
+void ZnpActorPublishEndpointAddedEvent(IEEEADDRESS macId, BYTE endpoint, WORD deviceId, WORD deviceType);
+void ZnpActorPublishDeviceAddedEvent(WORD nAddress);
 void ZnpActorPublishDeviceRemovedEvent(IEEEADDRESS macId);
 void ZnpActorPublishDeviceOfflineEvent(IEEEADDRESS macId);
 void ZnpActorPublishDeviceOnlineEvent(IEEEADDRESS macId);
 void ZnpActorPublishDeviceErrorEvent(IEEEADDRESS macId, WORD error);
+void ZnpActorPublishDeviceLqi(WORD nAddress, BYTE nLqi);
 void ZnpActorPublishZnpStatus(char* status);
 PZNPACTORDATA ZnpActorMakeData(char* dataName, BYTE nDataType, void* data, BYTE dataLen);
 void ZnpActorDestroyZnpData(PZNPACTORDATA pData);
