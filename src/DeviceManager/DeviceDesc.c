@@ -182,7 +182,7 @@ VOID DevDesUpdateFiles()
 
 json_t* DevDesMakeDeviceClassJson(WORD deviceId, WORD deviceType)
 {
-	json_t* deviceClassJson;
+	json_t* deviceClassJson = NULL;
 	switch (deviceId)
 	{
 	case DEVICE_ID_OCCUPANCY_SENSOR:
