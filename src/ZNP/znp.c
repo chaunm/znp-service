@@ -269,3 +269,21 @@ VOID ZnpStateProcess()
 		}
 	}
 }
+
+int ZnpGetRtgTable()
+{
+	int nResult = 0;
+	printf("Get routing table\n");
+	PQUEUECONTENT pCommand;
+	ZDOMGMTRTGREQ  routeReq;
+	routeReq.nAddress = 0x0000;
+	routeReq.nStartIndex = 0;
+	pCommand = ZnpMakeSerialCommand(ZDO_MGMT_RTG_REQ, 3, (PBYTE)&routeReq);
+	ZnpWriteSerialCommand(pCommand);
+	ZnpSetState(ZNP_STATE_WAIT_RSP, ZDO_MGMT_RTG_REQ_RSP);
+	free(pCommand->pData);
+	free(pCommand);
+	while(ZnpGetState() != ZNP_STATE_ACTIVE);
+	nResult = ZnpGetCmdState(ZB_WRITE_CONFIGURATION_RES);
+	return nResult;
+}

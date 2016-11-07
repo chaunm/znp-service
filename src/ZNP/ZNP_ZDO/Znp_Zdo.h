@@ -29,6 +29,9 @@
 #define ZDO_IEEE_ADDR_REQ_RSP		0x0165
 #define ZDO_IEEE_ADDR_RSP			0x8145
 #define ZDO_PERMIT_JOIN_SESSION_END	0xCB45
+#define ZDO_MGMT_RTG_REQ			0x3225
+#define ZDO_MGMT_RTG_REQ_RSP		0x3265
+#define ZDO_MGMT_RTG_RSP			0xB245
 /* ZDO command struct definition */
 #pragma pack(1)
 typedef struct tagZNPZDOPERJOINDATA {
@@ -123,6 +126,25 @@ typedef struct tagZDOIEEEADDRRSP {
 	WORD nAssoDeviceList[];
 }ZDOIEEEADDRRSP, *PZDOIEEEADDRRSP;
 
+typedef struct tagZDOMGMTRTGREQ {
+	WORD nAddress;
+	BYTE nStartIndex;
+} ZDOMGMTRTGREQ, *PZDOMGMTRTGREQ;
+
+typedef struct tagRTGENTRY {
+	WORD nAddress;
+	BYTE nStatus;
+	WORD nextHop;
+} RTGENTRY, *PRTGENTRY;
+
+typedef struct tagZDOMGMTRTGRSP {
+	WORD nSourceAddr;
+	BYTE nStatus;
+	BYTE nTotalEntries;
+	BYTE nStartIndex;
+	BYTE nEntriesCount;
+	RTGENTRY entriesList[];
+} ZDOMGMTRTGRSP, *PZDOMGMTRTGRSP;
 /* exported function */
 VOID ZnpZdoProcessIncomingCommand(PZNPPACKAGE pBuffer, BYTE nLength);
 BYTE ZnpZdoActiveEpRequest(WORD nNwkAddress);

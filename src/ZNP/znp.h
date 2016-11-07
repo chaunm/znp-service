@@ -90,4 +90,5 @@ WORD ZnpGetShortAddr();
 BYTE ZnpGetDefaultEp();
 BOOL ZnpInit(PSERIAL pSerialPort, WORD nStatusUpdateTime);
 VOID ZnpStateProcess();
+int ZnpGetRtgTable();
 #endif /* ZNP_H_ */
