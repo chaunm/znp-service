@@ -1154,11 +1154,13 @@ VOID DeviceAddCluster(PCLUSTERADDR pClusterAddr)
  */
 VOID DeviceProcessTimeout()
 {
-	static WORD routingCycleCheck = 0;
+	//static WORD routingCycleCheck = 0;
 	PDEVICEINFO pDevice = pFirstDevice;
 	char* LogString;
 	while (pDevice != NULL)
 	{
+		if (pDevice->nDeviceTimeOut == 120)
+			ZnpZdoActiveEpRequest(pDevice->nNetworkAddress);
 		if (pDevice->nDeviceTimeOut > 0)
 		{
 			pDevice->nDeviceTimeOut--;
@@ -1176,13 +1178,16 @@ VOID DeviceProcessTimeout()
 	}
 
 	// get routing table and reset timeout if device active / set time out to 0 if device inactive
+	/*
 	if (routingCycleCheck < ROUTING_TABLE_CYCLE)
 		routingCycleCheck++;
 	else
 	{
 		routingCycleCheck = 0;
-		ZnpGetRtgTable();
+		//ZnpGetRtgTable();
+		//ZnpZdoActiveEpRequest()
 	}
+	*/
 }
 
 /* Function: DeviceProcessTimeout()

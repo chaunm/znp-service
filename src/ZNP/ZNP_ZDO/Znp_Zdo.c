@@ -152,6 +152,7 @@ VOID ZnpZdoProcessActEpRsp(PZNPPACKAGE pBuffer, BYTE nLength)
 	//Update Endpoint info
 	DeviceUpdateDeviceInfo(pActEpRsp->nNwkAddr, pActEpRsp->nNumAtvEp, pActEpRsp->pEpList);
 	DeviceSetInformed(pActEpRsp->nNwkAddr, pBuffer->nCommand, 0xFF);
+	DeviceSetTimeoutTime(pActEpRsp->nNwkAddr, DEFAULT_DEVICE_TIMEOUT);
 }
 
 /* Function: ZnpZdoSimpleDescReq(PZNPPACKAGE pBuffer, BYTE nLength)
