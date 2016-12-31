@@ -103,7 +103,8 @@ static void ZnpActorOnRequestAddDevice(PVOID pParam)
 	ActorFreeHeaderStruct(header);
 	json_decref(responseJson);
 	ActorFreeSplitMessage(znpSplitMessage);
-	ActorSend(pZnpActor, responseTopic, responseMessage, NULL, FALSE, responseTopic);
+//	ActorSend(pZnpActor, responseTopic, responseMessage, NULL, FALSE, responseTopic);
+	ActorSend(pZnpActor, responseTopic, responseMessage, NULL, FALSE, "response");
 	free(responseMessage);
 	free(responseTopic);
 }
@@ -191,7 +192,8 @@ static void ZnpActorOnRequestRemoveDevice(PVOID pParam)
 	//responseTopic = ActorMakeTopicName(NULL, header->origin, NULL);
 	responseTopic = StrDup(header->origin);
 	ActorFreeHeaderStruct(header);
-	ActorSend(pZnpActor, responseTopic, responseMessage, NULL, FALSE, responseTopic);
+//	ActorSend(pZnpActor, responseTopic, responseMessage, NULL, FALSE, responseTopic);
+	ActorSend(pZnpActor, responseTopic, responseMessage, NULL, FALSE, "response");
 	free(responseMessage);
 	free(responseTopic);
 }
