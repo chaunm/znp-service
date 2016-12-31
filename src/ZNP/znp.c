@@ -19,7 +19,6 @@
 #include "ZNP_Util/Znp_Util.h"
 #include "ZNP_ZDO/Znp_Zdo.h"
 
-
 ZNPDEVICE stZnpDevice;
 BYTE nZnpDefaultEp = ZNP_DEFAULT_ENDPOINT;
 #define ZNP_MAX_TIMEOUT		10
@@ -210,6 +209,8 @@ BOOL ZnpInit(PSERIAL pSerialPort, WORD nStatusUpdateTime)
 	ZnpUtilGetDeviceInfo();
 	//Permit join request
 	ZnpZbPermitJoiningReq(0xFFFC, 255);
+	// Get RTG table
+	ZnpGetRtgTable();
 	return TRUE;
 }
 

@@ -63,6 +63,7 @@ char** ActorSplitStringByLim(char* inputString, const char input_delim)
 
 char* ActorGetActFromTopic(char** topicNameSplit)
 {
+	/*
 	int i = 0;
 	while (*(topicNameSplit + i) != NULL)
 	{
@@ -75,8 +76,12 @@ char* ActorGetActFromTopic(char** topicNameSplit)
 		else
 			i++;
 	}
+	*/
+	if (*(topicNameSplit) != NULL)
+		return *(topicNameSplit);
 	return NULL;
 }
+
 char* ActorCreateUuidString()
 {
 	uuid_t uuid;

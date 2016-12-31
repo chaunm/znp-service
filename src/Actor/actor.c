@@ -24,7 +24,16 @@ void ActorOnDelivered(struct mosquitto* client, void* context, int dt);
 
 static void ActorOnRequestStop(PVOID pParam)
 {
-	sleep(2);
+	PACTOR actor = (PACTOR)pParam;
+	json_t* responseJson = json_object();
+	json_t* statusJson = json_string("status.offline");
+	json_object_set(responseJson, "status", statusJson);
+	char* responseMessage = json_dumps(responseJson, JSON_INDENT(4) | JSON_REAL_PRECISION(4));
+	ActorSend(actor, "event/service/world/manifest", responseMessage, NULL, FALSE, NULL);
+	free(responseMessage);
+	json_decref(statusJson);
+	json_decref(responseJson);
+	sleep(5);
 	exit(EXIT_SUCCESS);
 }
 
@@ -38,11 +47,11 @@ char* ActorMakeGuid(char* prefix)
 	return znpGuid;
 }
 
-char* ActorMakeTopicName(const char* guid, char* topic)
+char* ActorMakeTopicName(const char* messageType, const char* guid, char* topic)
 {
-	char* topicName = malloc(strlen(guid) + strlen(topic) + 1);
-	memset(topicName, 0, strlen(guid) + strlen(topic) + 1);
-	sprintf(topicName, "%s%s", guid, topic);
+	char* topicName = malloc(strlen(messageType) + strlen(guid) + strlen(topic) + 1);
+	memset(topicName, 0, strlen(messageType) + strlen(guid) + strlen(topic) + 1);
+	sprintf(topicName, "%s%s%s", messageType, guid, topic);
 	return topicName;
 }
 
@@ -250,16 +259,23 @@ int ActorConnect(PACTOR pActor, char* guid, char* psw, char* inHost, WORD inPort
     return rc;
 }
 
-void ActorSend(PACTOR pActor, char* topicName, char* message, ACTORCALLBACKFN callback, char bIdGen)
+void ActorSend(PACTOR pActor, char* topicName, char* message, ACTORCALLBACKFN callback, char bIdGen, char* type)
 {
 	json_t* jsonMessage;
 	json_t* jsonHeader;
 	json_t* jsonId = NULL;
+	json_t* typeJson = NULL;
 	char* sendBuffer;
 	if (pActor->connected == FALSE) return;
 	if ((topicName == NULL) || (message == NULL))
 		return;
 	jsonMessage = json_loads(message, JSON_DECODE_ANY, NULL);
+	if (type != NULL)
+	{
+		typeJson = json_string(type);
+		json_object_set(jsonMessage, "type", typeJson);
+		json_decref(typeJson);
+	}
 	jsonHeader = json_object_get(jsonMessage, "header");
 	if (jsonHeader != NULL)
 	{
@@ -276,16 +292,16 @@ void ActorSend(PACTOR pActor, char* topicName, char* message, ACTORCALLBACKFN ca
 		json_decref(uuidJson);
 		json_decref(jsonHeader);
 		free(uuidString);
-		sendBuffer = json_dumps(jsonMessage, JSON_INDENT(4) | JSON_REAL_PRECISION(4));
+
 	}
 	else
 	{
-		sendBuffer = StrDup(message);
 		if (jsonId != NULL)
 			json_decref(jsonId);
 		if (jsonHeader != NULL)
 			json_decref(jsonHeader);
 	}
+	sendBuffer = json_dumps(jsonMessage, JSON_INDENT(4) | JSON_REAL_PRECISION(4));
 	mosquitto_publish(pActor->client, &pActor->DeliveredToken, topicName, strlen(sendBuffer),
 			(void*)sendBuffer, QOS, 0);
 
@@ -295,6 +311,7 @@ void ActorSend(PACTOR pActor, char* topicName, char* message, ACTORCALLBACKFN ca
 		if (jsonHeader != NULL)
 		{
 			jsonId = json_object_get(jsonHeader, "id");
+			printf("Set callback on id %s\n", json_string_value(jsonId));
 			ActorRegisterCallback(pActor, json_string_value(jsonId), callback, CALLBACK_ONCE);
 			json_decref(jsonId);
 			json_decref(jsonHeader);
@@ -308,9 +325,6 @@ void ActorReceive(PACTOR pActor, char* topicName, char* payload)
 {
 	int i;
 	char* TopicNameAct;
-	char* relTopic;
-	char relTopicPosition;
-	int	relTopicSize = 0;
 	char** TopicNameSplit;
 	char** messageSplit;
 	char* pParamMessage;
@@ -332,37 +346,19 @@ void ActorReceive(PACTOR pActor, char* topicName, char* payload)
 		return;
 	}
 	// Request processing
-	if (strcmp(TopicNameAct, ":request") == 0)
+	//if (strcmp(TopicNameAct, ":request") == 0)
+	if (strcmp(TopicNameAct, "action") == 0)
 	{
-		// get position of topic act in topic name
-		relTopicPosition = 0;
-		while (strcmp(*(TopicNameSplit + relTopicPosition), ":request") != 0)
-		{
-			relTopicPosition++;
-		}
-		// get the size of relative topic
-		i = relTopicPosition;
-		while (*(TopicNameSplit + i))
-		{
-			relTopicSize += strlen(*(TopicNameSplit + i)) + 1;
-			i++;
-		}
-		relTopicSize++;
-		relTopic = malloc(relTopicSize);
-		memset(relTopic, 0, relTopicSize);
-		sprintf(relTopic,"%s", *(TopicNameSplit + relTopicPosition));
-		i = relTopicPosition + 1;
-		while (*(TopicNameSplit + i))
-		{
-			sprintf(relTopic,"%s%s%s", relTopic, "/", *(TopicNameSplit + i));
-			i++;
-		}
 		pParamMessage = StrDup(payload);
-		ActorEmitEvent(pActor, relTopic, pParamMessage);
-		free(relTopic);
+		ActorEmitEvent(pActor, topicName, pParamMessage);
 	}
-	// Response processing
-	if (strcmp(TopicNameAct, ":response") == 0)
+	// Event processing
+	if (strcmp(TopicNameAct, "event") == 0)
+	{
+		printf("parsing event");
+	}
+	// Primary topic processing
+	if (strcmp(topicName, pActor->guid) == 0)
 	{
 		//split message into header and content;
 		messageSplit = ActorSplitMessage(payload);
@@ -380,7 +376,6 @@ void ActorReceive(PACTOR pActor, char* topicName, char* payload)
 		}
 		// assume that message content is the 2nd json message
 		messageContent = messageSplit[1];
-		puts("Response received");
 		receiveJsonMessage = json_loads(messageContent, JSON_DECODE_ANY, NULL);
 		if (receiveJsonMessage == NULL)
 		{
@@ -395,8 +390,8 @@ void ActorReceive(PACTOR pActor, char* topicName, char* payload)
 			ActorFreeSplitMessage(messageSplit);
 			return;
 		}
-		responseJsonReq = json_object_get(receiveJsonMessage, "request");
-		if (responseJsonReq == NULL)
+		json_t* messageTypeJson = json_object_get(receiveJsonMessage, "type");
+		if (messageTypeJson == NULL)
 		{
 			json_decref(receiveJsonMessage);
 			if (*TopicNameSplit)
@@ -410,55 +405,79 @@ void ActorReceive(PACTOR pActor, char* topicName, char* payload)
 			ActorFreeSplitMessage(messageSplit);
 			return;
 		}
-
-		// should check id before get
-		json_t* headerJson = json_object_get(responseJsonReq, "header");
-		if (headerJson == NULL)
+		// parsing response message
+		if (strcmp(json_string_value(messageTypeJson), "response") == 0)
 		{
-			json_decref(receiveJsonMessage);
-			json_decref(responseJsonReq);
-			if (*TopicNameSplit)
+			responseJsonReq = json_object_get(receiveJsonMessage, "request");
+			if (responseJsonReq == NULL)
 			{
-				for (i = 0; *(TopicNameSplit + i); i++)
+				json_decref(receiveJsonMessage);
+				json_decref(messageTypeJson);
+				if (*TopicNameSplit)
 				{
-					free(*(TopicNameSplit + i));
+					for (i = 0; *(TopicNameSplit + i); i++)
+					{
+						free(*(TopicNameSplit + i));
+					}
+					free(TopicNameSplit);
 				}
-				free(TopicNameSplit);
+				ActorFreeSplitMessage(messageSplit);
+				return;
 			}
-			ActorFreeSplitMessage(messageSplit);
-			return;
-		}
-		json_t* requestIdJson = json_object_get(headerJson, "id");
-		if (requestIdJson == NULL)
-		{
-			json_decref(receiveJsonMessage);
-			json_decref(responseJsonReq);
+			// should check id before get
+			json_t* headerJson = json_object_get(responseJsonReq, "header");
+			if (headerJson == NULL)
+			{
+				json_decref(receiveJsonMessage);
+				json_decref(messageTypeJson);
+				json_decref(responseJsonReq);
+				if (*TopicNameSplit)
+				{
+					for (i = 0; *(TopicNameSplit + i); i++)
+					{
+						free(*(TopicNameSplit + i));
+					}
+					free(TopicNameSplit);
+				}
+				ActorFreeSplitMessage(messageSplit);
+				return;
+			}
+			json_t* requestIdJson = json_object_get(headerJson, "id");
+			if (requestIdJson == NULL)
+			{
+				json_decref(receiveJsonMessage);
+				json_decref(messageTypeJson);
+				json_decref(responseJsonReq);
+				json_decref(headerJson);
+				if (*TopicNameSplit)
+				{
+					for (i = 0; *(TopicNameSplit + i); i++)
+					{
+						free(*(TopicNameSplit + i));
+					}
+					free(TopicNameSplit);
+				}
+				ActorFreeSplitMessage(messageSplit);
+				return;
+			}
+			pParamMessage = StrDup(payload);
+			// creat event
+			if (json_is_string(requestIdJson))
+				ActorEmitEvent(pActor, json_string_value(requestIdJson), pParamMessage);
+			json_decref(requestIdJson);
 			json_decref(headerJson);
-			if (*TopicNameSplit)
-			{
-				for (i = 0; *(TopicNameSplit + i); i++)
-				{
-					free(*(TopicNameSplit + i));
-				}
-				free(TopicNameSplit);
-			}
-			ActorFreeSplitMessage(messageSplit);
-			return;
+			json_decref(responseJsonReq);
 		}
-		pParamMessage = StrDup(payload);
-		// creat event
-		if (json_is_string(requestIdJson))
-			ActorEmitEvent(pActor, json_string_value(requestIdJson), pParamMessage);
-		json_decref(requestIdJson);
-		json_decref(responseJsonReq);
+		// parsing action, stop message
+		if (strcmp(json_string_value(messageTypeJson), "action/stop") == 0)
+		{
+			ActorOnRequestStop((PVOID)pActor);
+		}
+		json_decref(messageTypeJson);
 		json_decref(receiveJsonMessage);
 		ActorFreeSplitMessage(messageSplit);
 	}
-	// Event processing
-	if (strcmp(TopicNameAct, ":event"))
-	{
 
-	}
 	// free allocated memory
 	if (*TopicNameSplit)
 	{
@@ -511,28 +530,43 @@ void ActorOnConnect(struct mosquitto* client, void* context, int result)
 {
 	PACTOR pActor = (PACTOR)context;
 	char* topicName;
-	char* guid = pActor->guid;
+	//char* guid = pActor->guid;
 	printf("%s actor connected %d\n", pActor->guid, result);
 	if (result == 0)
 	{
 		pActor->connected = 1;
-		ActorRegisterCallback(pActor, ":request/stop", ActorOnRequestStop, CALLBACK_RETAIN);
+		//no more request stop - chaunm 10/10/2016
+		//ActorRegisterCallback(pActor, ":request/stop", ActorOnRequestStop, CALLBACK_RETAIN);
 
-		topicName = ActorMakeTopicName(guid, "/:request/#");
+		// listen on action
+		//topicName = ActorMakeTopicName(guid, "/:request/#");
+		topicName = ActorMakeTopicName("action/", pActor->guid, "/#");
 		printf("subscribe to topic %s\n", topicName);
 		mosquitto_subscribe(client, &pActor->DeliveredToken, topicName, QOS);
 		free(topicName);
-
-		topicName = ActorMakeTopicName(guid, "/:response");
+		// listen on its primary topic for response and common request
+		//topicName = ActorMakeTopicName(guid, "/:response");
+		topicName = StrDup(pActor->guid);
 		printf("subscribe to topic %s\n", topicName);
 		mosquitto_subscribe(client, &pActor->DeliveredToken, topicName, QOS);
 		free(topicName);
 
 		//listen on its own event topic to test
-		topicName = ActorMakeTopicName(guid, "/:event/#");
+		//topicName = ActorMakeTopicName(guid, "/:event/#");
+		topicName = ActorMakeTopicName("event/", pActor->guid, "/#");
 		printf("subscribe to topic %s\n", topicName);
 		mosquitto_subscribe(client, &pActor->DeliveredToken, topicName, QOS);
 		free(topicName);
+
+		//publish to the system about online status
+		json_t* startJson = json_object();
+		json_t* statusJson = json_string("status.online");
+		json_object_set(startJson, "status", statusJson);
+		char* startMessage = json_dumps(startJson, JSON_INDENT(4) | JSON_REAL_PRECISION(4));
+		ActorSend(pActor, "event/service/world/manifest", startMessage, NULL, FALSE, NULL);
+		free(startMessage);
+		json_decref(statusJson);
+		json_decref(startJson);
 	}
 	else
 		pActor->connected = 0;

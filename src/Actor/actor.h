@@ -70,7 +70,7 @@ char* ActorMakeGuid(char* prefix);
  * 		/:response
  * 		/:event
  */
-char* ActorMakeTopicName(const char* guid, char* topic);
+char* ActorMakeTopicName(const char* messageType, const char* guid, char* topic);
 /* register callback for actor
  * event: event to trigger callback
  * callback:
@@ -102,7 +102,7 @@ PACTOR ActorCreate(char* guid, char* psw, char* host, WORD port);
 /* Delete an actor */
 void ActorDelete(PACTOR pActor);
 /* Actor publish a message to topicName and trigger a callback for response handling */
-void ActorSend(PACTOR pActor, char* topicName, char* message, ACTORCALLBACKFN callback, char bIdGen);
+void ActorSend(PACTOR pActor, char* topicName, char* message, ACTORCALLBACKFN callback, char bIdGen, char* type);
 /* Get uuid name of an actor */
 char* ActorGetGuid(PACTOR pActor);
 

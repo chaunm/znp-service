@@ -36,7 +36,7 @@
 /* define ZNP Command */
 #pragma pack(1)
 typedef struct tagZNPDEVICE {
-	PSERIAL pSerialPort;
+	PSERIAL	pSerialPort;
 	IEEEADDRESS IeeeAddr;
 	WORD nShortAddress;
 	BYTE nZnpState;

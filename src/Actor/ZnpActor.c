@@ -99,11 +99,11 @@ static void ZnpActorOnRequestAddDevice(PVOID pParam)
 	json_object_set(responseJson, "response", statusJson);
 	json_decref(statusJson);
 	responseMessage = json_dumps(responseJson, JSON_INDENT(4) | JSON_REAL_PRECISION(4));
-	responseTopic = ActorMakeTopicName(header->origin, "/:response");
+	responseTopic = StrDup(header->origin);
 	ActorFreeHeaderStruct(header);
 	json_decref(responseJson);
 	ActorFreeSplitMessage(znpSplitMessage);
-	ActorSend(pZnpActor, responseTopic, responseMessage, NULL, FALSE);
+	ActorSend(pZnpActor, responseTopic, responseMessage, NULL, FALSE, responseTopic);
 	free(responseMessage);
 	free(responseTopic);
 }
@@ -188,9 +188,10 @@ static void ZnpActorOnRequestRemoveDevice(PVOID pParam)
 	responseMessage = json_dumps(responseJson, JSON_INDENT(4) | JSON_REAL_PRECISION(4));
 	json_decref(responseJson);
 	ActorFreeSplitMessage(znpSplitMessage);
-	responseTopic = ActorMakeTopicName(header->origin, "/:response");
+	//responseTopic = ActorMakeTopicName(NULL, header->origin, NULL);
+	responseTopic = StrDup(header->origin);
 	ActorFreeHeaderStruct(header);
-	ActorSend(pZnpActor, responseTopic, responseMessage, NULL, FALSE);
+	ActorSend(pZnpActor, responseTopic, responseMessage, NULL, FALSE, responseTopic);
 	free(responseMessage);
 	free(responseTopic);
 }
@@ -204,8 +205,13 @@ static void ZnpActorCreat(char* guid, char* psw, char* host, WORD port)
 		printf("Couldn't create actor\n");
 		return;
 	}
-	ActorRegisterCallback(pZnpActor, ":request/add_devices", ZnpActorOnRequestAddDevice, CALLBACK_RETAIN);
-	ActorRegisterCallback(pZnpActor, ":request/remove_device", ZnpActorOnRequestRemoveDevice, CALLBACK_RETAIN);
+	char* actionTopic;
+	actionTopic = ActorMakeTopicName("action/", guid, "/add_devices");
+	ActorRegisterCallback(pZnpActor, actionTopic, ZnpActorOnRequestAddDevice, CALLBACK_RETAIN);
+	free(actionTopic);
+	actionTopic = ActorMakeTopicName("action/", guid, "/remove_device");
+	ActorRegisterCallback(pZnpActor, actionTopic, ZnpActorOnRequestRemoveDevice, CALLBACK_RETAIN);
+	free(actionTopic);
 }
 
 void ZnpActorPublishEndpointAddedEvent(IEEEADDRESS macId, BYTE endpoint, WORD deviceId, WORD deviceType)
@@ -228,66 +234,6 @@ void ZnpActorPublishEndpointAddedEvent(IEEEADDRESS macId, BYTE endpoint, WORD de
 	json_decref(endpointJson);
 	json_t* deviceClassJson;
 	deviceClassJson = DevDesMakeDeviceClassJson(deviceId, deviceType);
-	/*
-	switch (deviceId)
-	{
-	case DEVICE_ID_OCCUPANCY_SENSOR:
-		deviceClassJson = json_string("class.device.sensor.occupancy");
-		break;
-	case DEVICE_ID_TEMPERATURE_SENSOR:
-		switch(deviceType)
-		{
-		case ZCL_CLUSTER_ID_MS_TEMPERATURE_MEASUREMENT:
-			deviceClassJson = json_string("class.device.sensor.temperature");
-			break;
-		case ZCL_CLUSTER_ID_MS_RELATIVE_HUMIDITY:
-			deviceClassJson = json_string("class.device.sensor.humidity");
-			break;
-		default:
-			deviceClassJson = json_string("class.device.sensor.unknown");
-			break;
-		}
-		break;
-	case DEVICE_ID_IAS_ZONE:
-		switch(deviceType)
-		{
-		case ZCL_IAS_ZONE_MOTION_SENSOR:
-			deviceClassJson = json_string("class.device.sensor.motion");
-			break;
-		case ZCL_IAS_ZONE_CONTACT_SWITCH:
-			deviceClassJson = json_string("class.device.sensor.door");
-			break;
-		case ZCL_IAS_ZONE_FIRE_SENSOR:
-			deviceClassJson = json_string("class.device.sensor.fire");
-			break;
-		case ZCL_IAS_ZONE_WATER_SENSOR:
-			deviceClassJson = json_string("class.device.sensor.water");
-			break;
-		case ZCL_IAS_ZONE_GAS_SENSOR:
-			deviceClassJson = json_string("class.device.sensor.gas");
-			break;
-		case ZCL_IAS_ZONE_VIBRATION_SENSOR:
-			deviceClassJson = json_string("class.device.sensor.vibration");
-			break;
-		case ZCL_IAS_ZONE_RM_CONTROL:
-			deviceClassJson = json_string("class.device.keyfob.remote");
-			break;
-		case ZCL_IAS_ZONE_KEY_FOB:
-			deviceClassJson = json_string("class.device.keyfob.panic");
-			break;
-		default:
-			deviceClassJson = json_string("class.device.security.unknown");
-			break;
-		}
-		break;
-	case DEVICE_ID_IAS_ACE:
-		deviceClassJson = json_string("class.device.keyfob.remote");
-		break;
-	default:
-		deviceClassJson = json_string("class.device.unknown");
-		break;
-	}
-	*/
 	json_object_set(paramsJson, "class", deviceClassJson);
 	json_decref(deviceClassJson);
 	json_t* protocolJson = json_string("zigbee");
@@ -297,8 +243,9 @@ void ZnpActorPublishEndpointAddedEvent(IEEEADDRESS macId, BYTE endpoint, WORD de
 	json_decref(paramsJson);
 	eventMessage = json_dumps(eventJson, JSON_INDENT(4) | JSON_REAL_PRECISION(4));
 	json_decref(eventJson);
-	topicName = ActorMakeTopicName(pZnpActor->guid, "/:event/endpoint_added");
-	ActorSend(pZnpActor, topicName, eventMessage, NULL, FALSE);
+	//topicName = ActorMakeTopicName(pZnpActor->guid, "/:event/endpoint_added");
+	topicName = ActorMakeTopicName("event/", pZnpActor->guid, "/endpoint_added");
+	ActorSend(pZnpActor, topicName, eventMessage, NULL, FALSE, topicName);
 	free(eventMessage);
 	free(topicName);
 }
@@ -336,7 +283,7 @@ void ZnpActorPublishDeviceAddedEvent(WORD nAddress)
 		epIndexJson = json_string(epString);
 		json_object_set(epJson, "endpoint", epIndexJson);
 		json_decref(epIndexJson);
-		deviceClassJson = DevDesMakeDeviceClassJson(pDevice->pEndpointInfoList[epIndex].nDeviceType,
+		deviceClassJson = DevDesMakeDeviceClassJson(pDevice->pEndpointInfoList[epIndex].nDeviceID,
 				pDevice->pEndpointInfoList[epIndex].nDeviceType);
 		json_object_set(epJson, "class", deviceClassJson);
 		json_decref(deviceClassJson);
@@ -350,8 +297,9 @@ void ZnpActorPublishDeviceAddedEvent(WORD nAddress)
 	free(epString);
 	eventMessage = json_dumps(eventJson, JSON_INDENT(4) | JSON_REAL_PRECISION(4));
 	json_decref(eventJson);
-	topicName = ActorMakeTopicName(pZnpActor->guid, "/:event/device_added");
-	ActorSend(pZnpActor, topicName, eventMessage, NULL, FALSE);
+	//topicName = ActorMakeTopicName(pZnpActor->guid, "/:event/device_added");
+	topicName = ActorMakeTopicName("event/", pZnpActor->guid, "/device_added");
+	ActorSend(pZnpActor, topicName, eventMessage, NULL, FALSE, topicName);
 	free(eventMessage);
 	free(topicName);
 }
@@ -369,8 +317,9 @@ void ZnpActorPublishDeviceRemovedEvent(IEEEADDRESS macId)
 	json_object_set(paramsJson, "protocol", protocolJson);
 	json_object_set(eventJson, "params", paramsJson);
 	char* eventMessage = json_dumps(eventJson, JSON_INDENT(4) | JSON_REAL_PRECISION(4));
-	char* topicName = ActorMakeTopicName(pZnpActor->guid, "/:event/device_removed");
-	ActorSend(pZnpActor, topicName, eventMessage, NULL, FALSE);
+	//char* topicName = ActorMakeTopicName(pZnpActor->guid, "/:event/device_removed");
+	char* topicName = ActorMakeTopicName("event/", pZnpActor->guid, "/device_removed");
+	ActorSend(pZnpActor, topicName, eventMessage, NULL, FALSE, topicName);
 	json_decref(protocolJson);
 	json_decref(macIdJson);
 	json_decref(paramsJson);
@@ -392,8 +341,9 @@ void ZnpActorPublishDeviceOfflineEvent(IEEEADDRESS macId)
 	json_object_set(paramsJson, "protocol", protocolJson);
 	json_object_set(eventJson, "params", paramsJson);
 	char* eventMessage = json_dumps(eventJson, JSON_INDENT(4) | JSON_REAL_PRECISION(4));
-	char* topicName = ActorMakeTopicName(pZnpActor->guid, "/:event/device_offline");
-	ActorSend(pZnpActor, topicName, eventMessage, NULL, FALSE);
+	//char* topicName = ActorMakeTopicName(pZnpActor->guid, "/:event/device_offline");
+	char* topicName = ActorMakeTopicName("event/", pZnpActor->guid, "/device_offline");
+	ActorSend(pZnpActor, topicName, eventMessage, NULL, FALSE, topicName);
 	json_decref(protocolJson);
 	json_decref(macIdJson);
 	json_decref(paramsJson);
@@ -415,8 +365,9 @@ void ZnpActorPublishDeviceOnlineEvent(IEEEADDRESS macId)
 	json_object_set(paramsJson, "protocol", protocolJson);
 	json_object_set(eventJson, "params", paramsJson);
 	char* eventMessage = json_dumps(eventJson, JSON_INDENT(4) | JSON_REAL_PRECISION(4));
-	char* topicName = ActorMakeTopicName(pZnpActor->guid, "/:event/device_online");
-	ActorSend(pZnpActor, topicName, eventMessage, NULL, FALSE);
+	//char* topicName = ActorMakeTopicName(pZnpActor->guid, "/:event/device_online");
+	char* topicName = ActorMakeTopicName("event/", pZnpActor->guid, "/device_online");
+	ActorSend(pZnpActor, topicName, eventMessage, NULL, FALSE, topicName);
 	json_decref(protocolJson);
 	json_decref(macIdJson);
 	json_decref(paramsJson);
@@ -443,8 +394,9 @@ void ZnpActorPublishDeviceErrorEvent(IEEEADDRESS macId, WORD error)
 	json_object_set(paramsJson, "error", errorJson);
 	json_object_set(eventJson, "params", paramsJson);
 	char* eventMessage = json_dumps(eventJson, JSON_INDENT(4) | JSON_REAL_PRECISION(4));
-	char* topicName = ActorMakeTopicName(pZnpActor->guid, "/:event/device_error");
-	ActorSend(pZnpActor, topicName, eventMessage, NULL, FALSE);
+	//char* topicName = ActorMakeTopicName(pZnpActor->guid, "/:event/device_error");
+	char* topicName = ActorMakeTopicName("event/", pZnpActor->guid, "/device_error");
+	ActorSend(pZnpActor, topicName, eventMessage, NULL, FALSE, topicName);
 	json_decref(errorJson);
 	json_decref(protocolJson);
 	json_decref(macIdJson);
@@ -476,8 +428,9 @@ void ZnpActorPublishDeviceLqi(WORD nAddress, BYTE nLqi)
 	json_object_set(paramsJson, "signal_strength", lqiJson);
 	json_object_set(eventJson, "params", paramsJson);
 	char* eventMessage = json_dumps(eventJson, JSON_INDENT(4) | JSON_REAL_PRECISION(4));
-	char* topicName = ActorMakeTopicName(pZnpActor->guid, "/:event/device_signal");
-	ActorSend(pZnpActor, topicName, eventMessage, NULL, FALSE);
+	//char* topicName = ActorMakeTopicName(pZnpActor->guid, "/:event/device_signal");
+	char* topicName = ActorMakeTopicName("event/", pZnpActor->guid, "/device_signal");
+	ActorSend(pZnpActor, topicName, eventMessage, NULL, FALSE, topicName);
 	json_decref(lqiJson);
 	json_decref(protocolJson);
 	json_decref(macIdJson);
@@ -491,15 +444,16 @@ void ZnpActorPublishZnpStatus(char* status)
 {
 	if (pZnpActor == NULL) return;
 	json_t* eventJson = json_object();
-	json_t* paramsJson = json_object();
+	//json_t* paramsJson = json_object();
 	json_t* statusJson = json_string(status);
-	json_object_set(paramsJson, "status", statusJson);
-	json_object_set(eventJson, "params", paramsJson);
+	json_object_set(eventJson, "status", statusJson);
+	//json_object_set(eventJson, "params", paramsJson);
 	char* eventMessage = json_dumps(eventJson, JSON_INDENT(4) | JSON_REAL_PRECISION(4));
-	char* topicName = ActorMakeTopicName(pZnpActor->guid, "/:event/status");
-	ActorSend(pZnpActor, topicName, eventMessage, NULL, FALSE);
+	//char* topicName = ActorMakeTopicName(pZnpActor->guid, "/:event/status");
+	char* topicName = ActorMakeTopicName("event/", "service/world", "/manifest");
+	ActorSend(pZnpActor, topicName, eventMessage, NULL, FALSE, topicName);
 	json_decref(statusJson);
-	json_decref(paramsJson);
+	//json_decref(paramsJson);
 	json_decref(eventJson);
 	free(topicName);
 	free(eventMessage);
@@ -599,8 +553,9 @@ void ZnpActorPublishDeviceDataEvent(IEEEADDRESS macId, BYTE endPoint, BYTE nData
 	json_decref(paramsJson);
 	char* eventMessage = json_dumps(eventJson, JSON_INDENT(4) | JSON_REAL_PRECISION(4));
 	json_decref(eventJson);
-	char* topicName = ActorMakeTopicName(pZnpActor->guid, "/:event/device_data");
-	ActorSend(pZnpActor, topicName, eventMessage, NULL, FALSE);
+	//char* topicName = ActorMakeTopicName(pZnpActor->guid, "/:event/device_data");
+	char* topicName = ActorMakeTopicName("event/", pZnpActor->guid, "/device_data");
+	ActorSend(pZnpActor, topicName, eventMessage, NULL, FALSE, topicName);
 	free(topicName);
 	free(eventMessage);
 }
